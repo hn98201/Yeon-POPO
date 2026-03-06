@@ -8,5 +8,12 @@
   },
   "holdings": [],
   "transactions": [],
-  "extra_deposits": []
+  "extra_deposits": [],
+  "signal_stages": {
+    "KMB": {
+      "done": 1,
+      "updated": "2026-03-06"
+    }
+  },
+  "signal_passes": []
 }
