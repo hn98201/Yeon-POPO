@@ -327,7 +327,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
       <span class="setting-label">Finnhub API Key</span>
       <input type="password" class="setting-input" id="cfgFinnhub" placeholder="발급: finnhub.io" oninput="saveSetting()">
     </div>
-    <div style="font-size:10px;color:var(--muted);padding:4px 0;">시세 · 환율 · 경제지표를 Finnhub API 하나로 자동 조회합니다</div>
+    <div style="font-size:10px;color:var(--muted);padding:4px 0;">신규 종목 시세 + VIX 실시간 조회. 환율·경제지표는 키 없이 자동 동작</div>
   </div>
   <div class="card">
     <div class="card-title">투자 설정 (매월 12일 자동 배정)</div>
@@ -610,7 +610,7 @@ function renderHome(){
   document.getElementById('eggStage').textContent=`${stage}단계`;
   document.getElementById('eggStage').style.color=col;
   document.getElementById('eggDesc').textContent=eggDesc;
-  document.getElementById('eggScore').textContent=`종합 점수: ${eggScore}${enhanced?' (선행지표 반영)':''}`;
+  document.getElementById('eggScore').textContent=`종합 점수: ${eggScore}${enhanced?' (방향성 반영)':''}`;
   document.getElementById('eggCard').style.borderColor=col+'44';
   renderEggStrategy(stage);
 
@@ -620,31 +620,37 @@ function renderHome(){
   let indHtml='';
   if(fc){
     const fmtV=(v,suf,dec)=>v!=null?v.toFixed(dec!=null?dec:1)+suf:'--';
+    const hasLead=fc.pmi!=null||fc.claims!=null||fc.hy_spread!=null;
     const rows=[
-      ['기준금리',fmtV(fc.fed_rate,'%',2),dirArrow(fc.fed_rate_d,false),false],
-      ['장단기스프레드',fmtV(fc.spread,'%',2),dirArrow(fc.spread_d,true),false],
-      ['VIX',fmtV(fc.vix,'',1),dirArrow(fc.vix_d,false),false],
-      ['실업률',fmtV(fc.unemp,'%',1),dirArrow(fc.unemp_d,false),false],
-      ['CPI(YoY)',fmtV(fc.cpi_yoy,'%',1),dirArrow(fc.cpi_d,false),false],
-      ['M2(YoY)',fmtV(fc.m2_yoy,'%',1),dirArrow(fc.m2_d,true),false],
-      ['ISM PMI',fmtV(fc.pmi,'',1),dirArrow(fc.pmi_d,true),true],
-      ['신규실업(천)',fc.claims!=null?(fc.claims/1000).toFixed(0)+'k':'--',dirArrow(fc.claims_d,false),true],
-      ['HY스프레드',fmtV(fc.hy_spread,'%',2),dirArrow(fc.hy_spread_d,false),true],
+      ['기준금리',fmtV(fc.fed_rate,'%',2),dirArrow(fc.fed_rate_d,false)],
+      ['장단기스프레드',fmtV(fc.spread,'%',2),dirArrow(fc.spread_d,true)],
+      ['VIX',fmtV(fc.vix,'',1),dirArrow(fc.vix_d,false)],
+      ['실업률',fmtV(fc.unemp,'%',1),dirArrow(fc.unemp_d,false)],
+      ['CPI(YoY)',fmtV(fc.cpi_yoy,'%',1),dirArrow(fc.cpi_d,false)],
+      ['M2(YoY)',fmtV(fc.m2_yoy,'%',1),dirArrow(fc.m2_d,true)],
     ];
-    indHtml=rows.map(([l,v,arrow,isNew])=>`<div class="ind-item${isNew?' ind-new':''}"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`).join('');
+    if(hasLead){
+      if(fc.pmi!=null)rows.push(['ISM PMI',fmtV(fc.pmi,'',1),dirArrow(fc.pmi_d,true)]);
+      if(fc.claims!=null)rows.push(['신규실업(천)',(fc.claims/1000).toFixed(0)+'k',dirArrow(fc.claims_d,false)]);
+      if(fc.hy_spread!=null)rows.push(['HY스프레드',fmtV(fc.hy_spread,'%',2),dirArrow(fc.hy_spread_d,false)]);
+    }
+    const cols=rows.length>6?3:hasLead?3:2;
+    document.getElementById('eggIndicators').style.gridTemplateColumns=`repeat(${cols},1fr)`;
+    indHtml=rows.map(([l,v,arrow])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`).join('');
 
     // 점수 분해 바
     if(enhanced&&enhanced.scores){
       const leadS=enhanced.scores.filter(s=>s.type==='lead');
       const lagS=enhanced.scores.filter(s=>s.type!=='lead');
       indHtml+=`<div style="grid-column:1/-1;margin-top:6px;padding:8px 10px;background:var(--surface);border-radius:8px;font-size:10px;line-height:1.8;">
-        <div style="color:var(--yellow);font-weight:600;margin-bottom:4px;">⚡ 선행지표 점수</div>
-        ${leadS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}
-        <div style="color:var(--muted);font-weight:600;margin:6px 0 4px;">📊 후행/심리 지표</div>
-        ${lagS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}
+        ${leadS.length?`<div style="color:var(--yellow);font-weight:600;margin-bottom:4px;">⚡ 선행지표 점수</div>
+        ${leadS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}`:''}
+        ${lagS.length?`<div style="color:var(--muted);font-weight:600;margin:${leadS.length?'6':'0'}px 0 4px;">📊 후행/심리 지표</div>
+        ${lagS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}`:''}
       </div>`;
     }
   }else{
+    document.getElementById('eggIndicators').style.gridTemplateColumns='repeat(2,1fr)';
     indHtml=[
       ['기준금리',ind.fed_rate!=null?ind.fed_rate.toFixed(2)+'%':'--'],
       ['10Y-2Y스프레드',ind.spread!=null?ind.spread.toFixed(2)+'%':'--'],
@@ -653,7 +659,7 @@ function renderHome(){
       ['CPI(YoY)',ind.cpi_yoy!=null?ind.cpi_yoy.toFixed(1)+'%':'--'],
       ['M2(YoY)',ind.m2_yoy!=null?ind.m2_yoy.toFixed(1)+'%':'--'],
     ].map(([l,v])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}</span></div>`).join('');
-    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:6px;">💡 Finnhub API 키를 설정하면 환율 · VIX · 선행지표 실시간 반영 + 방향성 분석이 추가됩니다</div>`;
+    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:6px;">💡 방향성 화살표는 다음 접속 시 이전 데이터와 비교하여 표시됩니다</div>`;
   }
   document.getElementById('eggIndicators').innerHTML=indHtml;
 
@@ -791,118 +797,79 @@ function renderEggStrategy(stage){
 }
 
 // ══════════════════════════════════════════════
-// ══ Finnhub 통합 엔진 (시세 · 환율 · 경제지표)
+// ══ 통합 엔진 (환율: 무료API / 지표: prices.json+방향성)
 // ══════════════════════════════════════════════
 
-// ── 환율 실시간 갱신
+// ── 환율 실시간 갱신 (무료, 키 불필요, CORS 지원)
 async function fetchLiveFx(){
-  const apiKey=G.settings.cfgFinnhub||'';
-  if(!apiKey)return;
   if(G._fxCache&&(Date.now()-G._fxCache._ts)<120000)return;
   try{
-    const r=await fetch(`https://finnhub.io/api/v1/forex/rates?base=USD&token=${apiKey}`);
+    const r=await fetch('https://open.er-api.com/v6/latest/USD');
     const j=await r.json();
-    if(j&&j.quote&&j.quote.KRW){
-      G._fxCache={rate:j.quote.KRW,_ts:Date.now()};
-      if(G.data)G.data.fx_rate=j.quote.KRW;
-      const rateStr=j.quote.KRW.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(j&&j.rates&&j.rates.KRW){
+      const rate=j.rates.KRW;
+      G._fxCache={rate,_ts:Date.now()};
+      if(G.data)G.data.fx_rate=rate;
+      const rateStr=rate.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
       document.getElementById('fxRate').innerHTML=`₩${rateStr} <span style="font-size:8px;color:var(--green);border:1px solid var(--green);border-radius:3px;padding:0 3px;vertical-align:middle;">LIVE</span>`;
       renderHome();renderHoldings();
     }
   }catch(e){console.warn('FX 조회 실패',e);}
 }
 
-// ── Finnhub 경제지표 조회 + 방향성 추적
-const FINNHUB_ECO={
-  pmi:{code:'MA_NAPM_PMI',name:'ISM PMI',label:'ISM PMI'},
-  claims:{code:'MA_IC',name:'Initial Claims',label:'신규실업(천)'},
-  fed_rate:{code:'MA_FED_FUNDS',name:'Fed Funds',label:'기준금리'},
-  cpi:{code:'MA_CPI_YOY',name:'CPI YoY',label:'CPI(YoY)'},
-  unemp:{code:'MA_UNEMP',name:'Unemployment',label:'실업률'},
-};
-
-async function fetchFinnhubEco(code,apiKey){
-  try{
-    const r=await fetch(`https://finnhub.io/api/v1/economic?code=${code}&token=${apiKey}`);
-    const j=await r.json();
-    if(Array.isArray(j)&&j.length>0){
-      const sorted=j.sort((a,b)=>a.date.localeCompare(b.date));
-      return sorted.slice(-15);
-    }
-    return[];
-  }catch(e){return[];}
-}
-
+// ── 경제지표 보강 (prices.json 기본 + VIX 실시간 + 방향성 추적)
 async function fetchEnhancedEgg(){
-  const apiKey=G.settings.cfgFinnhub||'';
-  if(!apiKey)return;
   if(G._ecoCache&&(Date.now()-G._ecoCache._ts)<300000)return;
 
-  toast('📊 경제지표 조회 중...');
-
-  // prices.json 기본 지표 기반 + 방향성 추적
   const egg=(G.data&&G.data.egg)||{};
   const ind=egg.indicators||{};
-  const prev=JSON.parse(localStorage.getItem('egg_history')||'{}');
-  const now=new Date().toISOString().slice(0,10);
+  if(!ind.fed_rate&&!ind.vix)return;
 
-  // 현재 값 저장 (방향성 비교용)
+  // 현재 값
+  const now=new Date().toISOString().slice(0,10);
   const cur={
     fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,
     unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,
     _date:now
   };
 
-  // Finnhub 경제 API로 선행지표 시도
-  let pmiVal=null,claimsVal=null;
-  const codes=Object.entries(FINNHUB_ECO);
-  for(const [key,cfg] of codes){
+  // VIX 실시간 시도 (Finnhub quote, 무료 가능)
+  const apiKey=G.settings.cfgFinnhub||'';
+  if(apiKey){
     try{
-      const data=await fetchFinnhubEco(cfg.code,apiKey);
-      if(data.length>0){
-        const latest=data[data.length-1];
-        const prev3=data.length>=4?data[data.length-4]:null;
-        if(key==='pmi'){pmiVal={current:latest.value,delta:prev3?(latest.value-prev3.value):null};}
-        if(key==='claims'){claimsVal={current:latest.value,delta:prev3?(latest.value-prev3.value):null};}
-        if(key==='fed_rate'&&cur.fed_rate==null)cur.fed_rate=latest.value;
-        if(key==='cpi'&&cur.cpi_yoy==null)cur.cpi_yoy=latest.value;
-        if(key==='unemp'&&cur.unemp==null)cur.unemp=latest.value;
-      }
+      const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=VIX&token=${apiKey}`);
+      const q=await r.json();
+      if(q&&q.c>0)cur.vix=q.c;
     }catch(e){}
   }
 
-  // VIX를 Finnhub quote로 시도 (CBOE VIX 지수)
-  let vixLive=null;
-  try{
-    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=VXX&token=${apiKey}`);
-    const q=await r.json();
-    if(q&&q.c>0){vixLive={current:q.c,dp:q.dp||0};}
-  }catch(e){}
-
   // 방향성 계산 (이전 저장값 대비)
+  const prev=JSON.parse(localStorage.getItem('egg_history')||'{}');
   const prevDate=prev._date||'';
   const daysDiff=prevDate?(Math.floor((new Date(now)-new Date(prevDate))/(864e5))):999;
   const dirs={};
-  if(daysDiff>=1&&prev._date){
+  if(prev._date){
     ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy'].forEach(k=>{
-      if(cur[k]!=null&&prev[k]!=null)dirs[k]=cur[k]-prev[k];
+      if(cur[k]!=null&&prev[k]!=null){
+        dirs[k]=cur[k]-prev[k];
+      }
     });
   }
 
-  // 저장 (최소 1일 간격)
-  if(daysDiff>=1){
+  // 최소 1일 간격으로 히스토리 갱신
+  if(daysDiff>=1||!prev._date){
     localStorage.setItem('egg_history',JSON.stringify(cur));
   }
 
   G._ecoCache={
-    fed_rate:cur.fed_rate, fed_rate_d:dirs.fed_rate||null,
-    spread:cur.spread, spread_d:dirs.spread||null,
-    vix:vixLive?vixLive.current:cur.vix, vix_d:vixLive?vixLive.dp:(dirs.vix||null),
-    unemp:cur.unemp, unemp_d:dirs.unemp||null,
-    cpi_yoy:cur.cpi_yoy, cpi_d:dirs.cpi_yoy||null,
-    m2_yoy:cur.m2_yoy, m2_d:dirs.m2_yoy||null,
-    pmi:pmiVal?pmiVal.current:null, pmi_d:pmiVal?pmiVal.delta:null,
-    claims:claimsVal?claimsVal.current:null, claims_d:claimsVal?claimsVal.delta:null,
+    fed_rate:cur.fed_rate, fed_rate_d:dirs.fed_rate!=null?dirs.fed_rate:null,
+    spread:cur.spread, spread_d:dirs.spread!=null?dirs.spread:null,
+    vix:cur.vix, vix_d:dirs.vix!=null?dirs.vix:null,
+    unemp:cur.unemp, unemp_d:dirs.unemp!=null?dirs.unemp:null,
+    cpi_yoy:cur.cpi_yoy, cpi_d:dirs.cpi_yoy!=null?dirs.cpi_yoy:null,
+    m2_yoy:cur.m2_yoy, m2_d:dirs.m2_yoy!=null?dirs.m2_yoy:null,
+    pmi:null, pmi_d:null,
+    claims:null, claims_d:null,
     hy_spread:null, hy_spread_d:null,
     _ts:Date.now()
   };
@@ -910,7 +877,6 @@ async function fetchEnhancedEgg(){
   const enhanced=calculateEnhancedStage(G._ecoCache);
   G._enhancedEgg=enhanced;
   renderHome();
-  toast('✅ 경제지표 반영 완료');
 }
 
 // ═══ 방향성 + 절대수준 기반 종합 스코어링
