@@ -45,6 +45,10 @@
     "LOW": {
       "done": 3,
       "updated": "2026-03-06"
+    },
+    "GPC": {
+      "done": 3,
+      "updated": "2026-03-06"
     }
   },
   "signal_passes": []
