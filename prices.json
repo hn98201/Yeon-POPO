@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-03-06 21:53 KST",
+  "updated_at": "2026-03-06 23:34 KST",
   "fx_rate": 1476.83,
   "egg": {
     "stage": 3,
     "desc": "③ 상승 초입",
-    "score": 3.28,
+    "score": 3.29,
     "indicators": {
       "fed_rate": 3.64,
       "spread": 0.55,
       "real_rate": 1.7,
       "vix": 21.15,
-      "unemp": 4.3,
+      "unemp": 4.4,
       "cpi_yoy": 2.39,
       "m2_yoy": 3.96,
       "credit_spread": 2.97,
@@ -21,8 +21,8 @@
   "current_30": [
     "CB",
     "CINF",
-    "BEN",
     "AFL",
+    "BEN",
     "AMP",
     "AON",
     "SPGI",
@@ -57,8 +57,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -33.74,
-      "momentum_6m": 11.13,
+      "wr": -37.07,
+      "momentum_6m": 10.42,
       "sector": "필수소비재"
     },
     "PG": {
@@ -67,8 +67,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -43.33,
-      "momentum_6m": 1.73,
+      "wr": -48.01,
+      "momentum_6m": 0.79,
       "sector": "필수소비재"
     },
     "PEP": {
@@ -77,8 +77,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -30.39,
-      "momentum_6m": 12.84,
+      "wr": -39.72,
+      "momentum_6m": 10.52,
       "sector": "필수소비재"
     },
     "CL": {
@@ -87,8 +87,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -27.95,
-      "momentum_6m": 10.83,
+      "wr": -30.76,
+      "momentum_6m": 10.03,
       "sector": "필수소비재"
     },
     "KMB": {
@@ -97,8 +97,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -44.41,
-      "momentum_6m": -21.25,
+      "wr": -61.57,
+      "momentum_6m": -23.25,
       "sector": "필수소비재"
     },
     "MKC": {
@@ -107,8 +107,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -55.82,
-      "momentum_6m": -5.88,
+      "wr": -55.59,
+      "momentum_6m": -5.84,
       "sector": "필수소비재"
     },
     "GIS": {
@@ -117,8 +117,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -81.41,
-      "momentum_6m": -10.22,
+      "wr": -79.59,
+      "momentum_6m": -9.94,
       "sector": "필수소비재"
     },
     "SYY": {
@@ -127,8 +127,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -29.44,
-      "momentum_6m": 7.85,
+      "wr": -34.21,
+      "momentum_6m": 6.61,
       "sector": "필수소비재"
     },
     "WMT": {
@@ -137,8 +137,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -45.74,
-      "momentum_6m": 19.4,
+      "wr": -49.44,
+      "momentum_6m": 18.51,
       "sector": "필수소비재"
     },
     "TGT": {
@@ -147,8 +147,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -15.02,
-      "momentum_6m": 18.08,
+      "wr": -18.28,
+      "momentum_6m": 16.88,
       "sector": "필수소비재"
     },
     "HRL": {
@@ -157,8 +157,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -47.65,
-      "momentum_6m": -12.91,
+      "wr": -48.59,
+      "momentum_6m": -13.05,
       "sector": "필수소비재"
     },
     "CLX": {
@@ -167,8 +167,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -45.65,
-      "momentum_6m": -6.03,
+      "wr": -49.22,
+      "momentum_6m": -7.01,
       "sector": "필수소비재"
     },
     "ADM": {
@@ -177,8 +177,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -28.75,
-      "momentum_6m": 17.87,
+      "wr": -20.35,
+      "momentum_6m": 19.92,
       "sector": "필수소비재"
     },
     "CAT": {
@@ -187,8 +187,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -35.84,
-      "momentum_6m": 70.4,
+      "wr": -46.0,
+      "momentum_6m": 64.74,
       "sector": "산업재"
     },
     "EMR": {
@@ -197,8 +197,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -64.1,
-      "momentum_6m": 8.45,
+      "wr": -73.37,
+      "momentum_6m": 5.99,
       "sector": "산업재"
     },
     "ITW": {
@@ -207,8 +207,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -34.31,
-      "momentum_6m": 11.33,
+      "wr": -40.41,
+      "momentum_6m": 9.88,
       "sector": "산업재"
     },
     "DOV": {
@@ -217,8 +217,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -39.49,
-      "momentum_6m": 25.23,
+      "wr": -49.19,
+      "momentum_6m": 22.18,
       "sector": "산업재"
     },
     "GWW": {
@@ -227,8 +227,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -25.51,
-      "momentum_6m": 21.39,
+      "wr": -33.44,
+      "momentum_6m": 19.06,
       "sector": "산업재"
     },
     "SWK": {
@@ -237,8 +237,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -62.0,
-      "momentum_6m": 15.03,
+      "wr": -73.12,
+      "momentum_6m": 10.94,
       "sector": "산업재"
     },
     "CHRW": {
@@ -247,8 +247,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -34.33,
-      "momentum_6m": 59.66,
+      "wr": -41.92,
+      "momentum_6m": 56.12,
       "sector": "산업재"
     },
     "EXPD": {
@@ -257,8 +257,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -54.44,
-      "momentum_6m": 25.93,
+      "wr": -60.68,
+      "momentum_6m": 23.92,
       "sector": "산업재"
     },
     "CTAS": {
@@ -267,8 +267,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -16.97,
-      "momentum_6m": -9.0,
+      "wr": -11.08,
+      "momentum_6m": -8.29,
       "sector": "산업재"
     },
     "ROL": {
@@ -277,8 +277,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -72.3,
-      "momentum_6m": 0.09,
+      "wr": -81.14,
+      "momentum_6m": -1.54,
       "sector": "산업재"
     },
     "FAST": {
@@ -287,8 +287,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -12.98,
-      "momentum_6m": -0.38,
+      "wr": -25.17,
+      "momentum_6m": -2.65,
       "sector": "산업재"
     },
     "NDSN": {
@@ -297,8 +297,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -32.48,
-      "momentum_6m": 34.11,
+      "wr": -40.41,
+      "momentum_6m": 31.29,
       "sector": "산업재"
     },
     "CB": {
@@ -307,8 +307,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -24.18,
-      "momentum_6m": 22.57,
+      "wr": -30.32,
+      "momentum_6m": 21.33,
       "sector": "금융"
     },
     "CINF": {
@@ -317,8 +317,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -41.45,
-      "momentum_6m": 12.0,
+      "wr": -56.35,
+      "momentum_6m": 10.08,
       "sector": "금융"
     },
     "AFL": {
@@ -327,8 +327,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -59.15,
-      "momentum_6m": 8.99,
+      "wr": -69.05,
+      "momentum_6m": 7.73,
       "sector": "금융"
     },
     "BEN": {
@@ -337,8 +337,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -22.28,
-      "momentum_6m": 10.72,
+      "wr": -34.62,
+      "momentum_6m": 7.53,
       "sector": "금융"
     },
     "SPGI": {
@@ -347,8 +347,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -58.66,
-      "momentum_6m": -18.5,
+      "wr": -61.46,
+      "momentum_6m": -19.36,
       "sector": "금융"
     },
     "AMP": {
@@ -367,8 +367,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -36.66,
-      "momentum_6m": -7.54,
+      "wr": -43.38,
+      "momentum_6m": -8.53,
       "sector": "금융"
     },
     "NUE": {
@@ -377,8 +377,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -58.45,
-      "momentum_6m": 24.76,
+      "wr": -66.76,
+      "momentum_6m": 22.2,
       "sector": "소재"
     },
     "PPG": {
@@ -387,8 +387,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -59.31,
-      "momentum_6m": 6.69,
+      "wr": -68.03,
+      "momentum_6m": 3.77,
       "sector": "소재"
     },
     "SHW": {
@@ -397,8 +397,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -71.34,
-      "momentum_6m": -4.1,
+      "wr": -82.43,
+      "momentum_6m": -5.95,
       "sector": "소재"
     },
     "LIN": {
@@ -407,8 +407,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -16.76,
-      "momentum_6m": 4.45,
+      "wr": -19.07,
+      "momentum_6m": 3.79,
       "sector": "소재"
     },
     "ECL": {
@@ -417,8 +417,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -38.38,
-      "momentum_6m": 5.7,
+      "wr": -46.59,
+      "momentum_6m": 3.94,
       "sector": "소재"
     },
     "APD": {
@@ -427,8 +427,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -29.14,
-      "momentum_6m": -2.96,
+      "wr": -29.6,
+      "momentum_6m": -3.07,
       "sector": "소재"
     },
     "ALB": {
@@ -437,8 +437,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -47.41,
-      "momentum_6m": 119.02,
+      "wr": -52.35,
+      "momentum_6m": 113.16,
       "sector": "소재"
     },
     "JNJ": {
@@ -447,8 +447,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -22.85,
-      "momentum_6m": 40.89,
+      "wr": -27.11,
+      "momentum_6m": 39.57,
       "sector": "헬스케어"
     },
     "ABT": {
@@ -457,8 +457,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -75.88,
-      "momentum_6m": -16.52,
+      "wr": -83.26,
+      "momentum_6m": -17.85,
       "sector": "헬스케어"
     },
     "BDX": {
@@ -467,8 +467,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -43.59,
-      "momentum_6m": 12.93,
+      "wr": -49.68,
+      "momentum_6m": 11.31,
       "sector": "헬스케어"
     },
     "ABBV": {
@@ -477,8 +477,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -14.49,
-      "momentum_6m": 19.12,
+      "wr": -24.16,
+      "momentum_6m": 17.49,
       "sector": "헬스케어"
     },
     "CAH": {
@@ -487,8 +487,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -45.61,
-      "momentum_6m": 38.03,
+      "wr": -46.36,
+      "momentum_6m": 37.84,
       "sector": "헬스케어"
     },
     "MDT": {
@@ -497,8 +497,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -94.73,
-      "momentum_6m": 1.64,
+      "wr": -99.71,
+      "momentum_6m": 0.18,
       "sector": "헬스케어"
     },
     "LOW": {
@@ -507,8 +507,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -70.25,
-      "momentum_6m": 6.62,
+      "wr": -80.1,
+      "momentum_6m": 4.37,
       "sector": "경기소비재"
     },
     "GPC": {
@@ -517,8 +517,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -91.33,
-      "momentum_6m": -10.65,
+      "wr": -96.9,
+      "momentum_6m": -12.26,
       "sector": "경기소비재"
     },
     "AWK": {
@@ -527,8 +527,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -17.91,
-      "momentum_6m": -5.62,
+      "wr": -23.53,
+      "momentum_6m": -6.3,
       "sector": "유틸리티"
     },
     "ATO": {
@@ -537,8 +537,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -10.27,
-      "momentum_6m": 14.71,
+      "wr": -11.04,
+      "momentum_6m": 14.59,
       "sector": "유틸리티"
     },
     "NFG": {
@@ -547,8 +547,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -6.37,
-      "momentum_6m": 6.89,
+      "wr": -4.18,
+      "momentum_6m": 7.29,
       "sector": "유틸리티"
     },
     "FRT": {
@@ -557,8 +557,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -13.44,
-      "momentum_6m": 21.73,
+      "wr": -19.19,
+      "momentum_6m": 20.67,
       "sector": "부동산"
     },
     "ESS": {
@@ -567,8 +567,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -37.74,
-      "momentum_6m": 3.44,
+      "wr": -48.67,
+      "momentum_6m": 1.99,
       "sector": "부동산"
     },
     "O": {
@@ -577,8 +577,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -23.64,
-      "momentum_6m": 15.93,
+      "wr": -24.53,
+      "momentum_6m": 15.73,
       "sector": "부동산"
     },
     "IBM": {
@@ -587,8 +587,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -63.2,
-      "momentum_6m": 7.81,
+      "wr": -64.21,
+      "momentum_6m": 7.4,
       "sector": "기술"
     },
     "TXN": {
@@ -597,8 +597,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -51.46,
-      "momentum_6m": 6.69,
+      "wr": -60.53,
+      "momentum_6m": 3.53,
       "sector": "기술"
     },
     "XOM": {
@@ -607,8 +607,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -19.34,
-      "momentum_6m": 44.68,
+      "wr": -13.66,
+      "momentum_6m": 47.17,
       "sector": "에너지"
     },
     "CVX": {
@@ -617,8 +617,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -3.57,
-      "momentum_6m": 26.48,
+      "wr": -0.55,
+      "momentum_6m": 27.82,
       "sector": "에너지"
     },
     "VOO": {
@@ -627,8 +627,8 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -56.84,
-      "momentum_6m": 7.62,
+      "wr": -88.59,
+      "momentum_6m": 6.19,
       "sector": "-"
     },
     "QQQ": {
@@ -647,25 +647,53 @@
       "pct": 0,
       "high": 0,
       "low": 0,
-      "wr": -32.1,
-      "momentum_6m": 8.8,
+      "wr": -41.71,
+      "momentum_6m": 7.58,
       "sector": "-"
     }
   },
   "active_signals": [
     {
-      "ticker": "EMR",
-      "wr": -64.1,
+      "ticker": "KMB",
+      "wr": -61.57,
       "level": "🟢 약매수 (WR≤-60)",
+      "price": 0,
+      "sector": "필수소비재"
+    },
+    {
+      "ticker": "EMR",
+      "wr": -73.37,
+      "level": "🟡 중매수 (WR≤-70)",
       "price": 0,
       "sector": "산업재"
     },
     {
       "ticker": "SWK",
-      "wr": -62.0,
+      "wr": -73.12,
+      "level": "🟡 중매수 (WR≤-70)",
+      "price": 0,
+      "sector": "산업재"
+    },
+    {
+      "ticker": "EXPD",
+      "wr": -60.68,
       "level": "🟢 약매수 (WR≤-60)",
       "price": 0,
       "sector": "산업재"
+    },
+    {
+      "ticker": "AFL",
+      "wr": -69.05,
+      "level": "🟢 약매수 (WR≤-60)",
+      "price": 0,
+      "sector": "금융"
+    },
+    {
+      "ticker": "SPGI",
+      "wr": -61.46,
+      "level": "🟢 약매수 (WR≤-60)",
+      "price": 0,
+      "sector": "금융"
     },
     {
       "ticker": "AMP",
@@ -675,22 +703,36 @@
       "sector": "금융"
     },
     {
+      "ticker": "NUE",
+      "wr": -66.76,
+      "level": "🟢 약매수 (WR≤-60)",
+      "price": 0,
+      "sector": "소재"
+    },
+    {
       "ticker": "LOW",
-      "wr": -70.25,
-      "level": "🟡 중매수 (WR≤-70)",
+      "wr": -80.1,
+      "level": "🔴 강매수 (WR≤-80)",
       "price": 0,
       "sector": "경기소비재"
     },
     {
       "ticker": "GPC",
-      "wr": -91.33,
+      "wr": -96.9,
       "level": "🔴 강매수 (WR≤-80)",
       "price": 0,
       "sector": "경기소비재"
     },
     {
       "ticker": "IBM",
-      "wr": -63.2,
+      "wr": -64.21,
+      "level": "🟢 약매수 (WR≤-60)",
+      "price": 0,
+      "sector": "기술"
+    },
+    {
+      "ticker": "TXN",
+      "wr": -60.53,
       "level": "🟢 약매수 (WR≤-60)",
       "price": 0,
       "sector": "기술"
@@ -1154,7 +1196,7 @@
         60.1,
         55.18,
         54.96,
-        50.17,
+        50.18,
         57.6,
         59.19,
         56.17,
@@ -1403,7 +1445,7 @@
         26.18,
         25.81,
         26.83,
-        23.04
+        21.67
       ]
     }
   },
