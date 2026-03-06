@@ -29,6 +29,10 @@
     "AFL": {
       "done": 1,
       "updated": "2026-03-06"
+    },
+    "SPGI": {
+      "done": 1,
+      "updated": "2026-03-06"
     }
   },
   "signal_passes": []
