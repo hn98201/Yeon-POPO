@@ -307,6 +307,14 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
     </div>
   </div>
   <div class="card">
+    <div class="card-title">실시간 시세 (Finnhub)</div>
+    <div class="setting-row">
+      <span class="setting-label">Finnhub API Key</span>
+      <input type="password" class="setting-input" id="cfgFinnhub" placeholder="발급: finnhub.io" oninput="saveSetting()">
+    </div>
+    <div style="font-size:10px;color:var(--muted);padding:4px 0;">prices.json에 없는 신규 매수 종목의 현재가를 자동 조회합니다</div>
+  </div>
+  <div class="card">
     <div class="card-title">투자 설정 (매월 12일 자동 배정)</div>
     <div class="setting-row">
       <span class="setting-label">월 투자금</span>
@@ -359,7 +367,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 <div class="toast" id="toast"></div>
 
 <script>
-let G={data:null,portfolio:null,compareChart:null,holdingsChart:null,divChart:null,
+let G={data:null,portfolio:null,compareChart:null,holdingsChart:null,divChart:null,liveQuotes:{},
   settings:JSON.parse(localStorage.getItem('pf_settings')||'{}')};
 
 const STAGE_COLORS={1:'#EF4444',2:'#F97316',3:'#F59E0B',4:'#10B981',5:'#3B82F6',6:'#8B5CF6'};
@@ -411,22 +419,56 @@ function mergedHoldings(){
   const merged=[...dataH];
   pfH.forEach(ph=>{
     if(ph.shares>0.0001&&!dataTickers.has(ph.ticker)){
-      const valUsd=ph.shares*(ph.avg_price_usd||0);
+      const cached=G.liveQuotes&&G.liveQuotes[ph.ticker];
+      const curPrice=cached?cached.price:ph.avg_price_usd;
+      const valUsd=ph.shares*curPrice;
+      const pnlPct=ph.avg_price_usd>0?((curPrice-ph.avg_price_usd)/ph.avg_price_usd*100):0;
+      const dpPct=cached?cached.dp:0;
       merged.push({
         ticker:ph.ticker,
         shares:ph.shares,
         avg_price_usd:ph.avg_price_usd||0,
-        current_price_usd:ph.avg_price_usd||0,
+        current_price_usd:curPrice,
         current_value_krw:Math.round(valUsd*fx),
-        pnl_pct:0,
-        day_change_pct:0,
+        pnl_pct:cached?pnlPct:0,
+        day_change_pct:dpPct,
         wr:null,
         sector:ph.sector||NOBL_UNIVERSE[ph.ticker]||'--',
-        _pending:true
+        _pending:!cached
       });
     }
   });
   return merged;
+}
+
+// ══ Finnhub 실시간 시세 조회 (pending 종목만)
+async function fetchPendingPrices(){
+  const apiKey=G.settings.cfgFinnhub||'';
+  if(!apiKey)return;
+  const dataH=(G.data&&G.data.holdings)||[];
+  const pfH=(G.portfolio&&G.portfolio.holdings)||[];
+  const dataTickers=new Set(dataH.map(h=>h.ticker));
+  const pendingTickers=pfH.filter(ph=>ph.shares>0.0001&&!dataTickers.has(ph.ticker)).map(ph=>ph.ticker);
+  if(!pendingTickers.length)return;
+
+  G.liveQuotes=G.liveQuotes||{};
+  let updated=false;
+
+  for(const ticker of pendingTickers){
+    if(G.liveQuotes[ticker]&&(Date.now()-G.liveQuotes[ticker]._ts)<60000)continue;
+    try{
+      const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${apiKey}`);
+      const q=await r.json();
+      if(q&&q.c>0){
+        G.liveQuotes[ticker]={price:q.c,dp:q.dp||0,_ts:Date.now()};
+        updated=true;
+      }
+    }catch(e){console.warn(`Finnhub ${ticker} 조회 실패`,e);}
+  }
+
+  if(updated){
+    renderHome();renderHoldings();renderHomeChart();
+  }
 }
 
 function wrToLevel(wr){return wr<=-80?3:wr<=-70?2:1;}
@@ -485,6 +527,7 @@ function renderAll(){
   if(!G.data)return;
   document.getElementById('updatedAt').textContent=G.data.updated_at||'--';
   renderHome();renderHoldings();renderSignals();renderCompare();renderDividend();renderTxList();renderSettings();
+  fetchPendingPrices();
 }
 
 // ══ 홈
@@ -595,7 +638,11 @@ function renderHoldings(){
     const dp=h.day_change_pct||0,dcls=dp>=0?'pos':'neg';
     const wr=h.wr!=null?h.wr.toFixed(1):'--';
     const wc=h.wr!=null?(h.wr<=-80?'var(--red)':h.wr<=-60?'var(--yellow)':'var(--muted)'):'var(--muted)';
-    const pendingTag=h._pending?'<span style="font-size:9px;color:var(--yellow);margin-left:6px;border:1px solid var(--yellow);border-radius:4px;padding:1px 5px;">시세 대기</span>':'';
+    const pendingTag=h._pending
+      ?(G.settings.cfgFinnhub
+        ?'<span style="font-size:9px;color:var(--yellow);margin-left:6px;border:1px solid var(--yellow);border-radius:4px;padding:1px 5px;">시세 조회중…</span>'
+        :'<span style="font-size:9px;color:var(--muted);margin-left:6px;border:1px solid var(--border);border-radius:4px;padding:1px 5px;">시세 대기</span>')
+      :'';
     return`<div class="holding-row">
       <div class="holding-left">
         <div class="holding-ticker">${h.ticker}${pendingTag}</div>
@@ -825,6 +872,7 @@ async function confirmBuy(){
   renderSignals();
   renderHoldings();
   renderTxList();
+  fetchPendingPrices();
 }
 
 // ══ 비교차트 (시작일 기준 정규화)
@@ -1015,7 +1063,7 @@ async function submitTx(){
     }
     toast(`✅ ${type==='buy'?'매수':type==='sell'?'매도':'배당재투자'} ${ticker}`);
   }
-  await savePortfolio();clearTxForm();renderHome();renderHoldings();renderTxList();renderDividend();
+  await savePortfolio();clearTxForm();renderHome();renderHoldings();renderTxList();renderDividend();fetchPendingPrices();
 }
 
 function clearTxForm(){
@@ -1053,6 +1101,7 @@ function saveSetting(){
   G.settings.cfgMonthly=document.getElementById('cfgMonthly').value;
   G.settings.cfgStart=document.getElementById('cfgStart').value;
   G.settings.cfgWrThr=document.getElementById('cfgWrThr').value;
+  G.settings.cfgFinnhub=document.getElementById('cfgFinnhub').value;
   localStorage.setItem('pf_settings',JSON.stringify(G.settings));
 }
 
@@ -1064,6 +1113,7 @@ function renderSettings(){
   document.getElementById('cfgMonthly').value=s.cfgMonthly||'800000';
   document.getElementById('cfgStart').value=s.cfgStart||'';
   document.getElementById('cfgWrThr').value=s.cfgWrThr||'-60';
+  document.getElementById('cfgFinnhub').value=s.cfgFinnhub||'';
   const deps=(G.portfolio&&G.portfolio.extra_deposits)||[];
   document.getElementById('extraDepList').innerHTML=!deps.length
     ?'<div style="font-size:12px;color:var(--muted);">추가 입금 내역 없음</div>'
