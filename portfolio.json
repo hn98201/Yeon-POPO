@@ -83,6 +83,13 @@
       "avg_price_usd": 256.77,
       "sector": "기술",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "TXN",
+      "shares": 0.0307,
+      "avg_price_usd": 194.81,
+      "sector": "기술",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -184,6 +191,15 @@
       "price_usd": 256.77,
       "fx": 1487,
       "note": "신호매수 약매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "TXN",
+      "shares": 0.0307,
+      "price_usd": 194.81,
+      "fx": 1487,
+      "note": "신호매수 약매수"
     }
   ],
   "extra_deposits": [],
@@ -229,6 +245,10 @@
       "updated": "2026-03-06"
     },
     "IBM": {
+      "done": 1,
+      "updated": "2026-03-06"
+    },
+    "TXN": {
       "done": 1,
       "updated": "2026-03-06"
     }
