@@ -13,6 +13,13 @@
       "avg_price_usd": 102.57,
       "sector": "필수소비재",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "EMR",
+      "shares": 0.0859,
+      "avg_price_usd": 139.33,
+      "sector": "산업재",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -24,12 +31,25 @@
       "price_usd": 102.57,
       "fx": 1486,
       "note": "신호매수 약매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "EMR",
+      "shares": 0.0859,
+      "price_usd": 139.33,
+      "fx": 1487,
+      "note": "신호매수 중매수"
     }
   ],
   "extra_deposits": [],
   "signal_stages": {
     "KMB": {
       "done": 1,
+      "updated": "2026-03-06"
+    },
+    "EMR": {
+      "done": 2,
       "updated": "2026-03-06"
     }
   },
