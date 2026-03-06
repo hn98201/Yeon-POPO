@@ -402,6 +402,33 @@ function dividendData(){
   return((G.portfolio&&G.portfolio.transactions)||[]).filter(t=>t.type==='dividend');
 }
 
+// ══ 핵심: G.data.holdings + G.portfolio.holdings 병합 (매수 즉시 반영)
+function mergedHoldings(){
+  const dataH=(G.data&&G.data.holdings)||[];
+  const pfH=(G.portfolio&&G.portfolio.holdings)||[];
+  const fx=G.data&&G.data.fx_rate?G.data.fx_rate:1350;
+  const dataTickers=new Set(dataH.map(h=>h.ticker));
+  const merged=[...dataH];
+  pfH.forEach(ph=>{
+    if(ph.shares>0.0001&&!dataTickers.has(ph.ticker)){
+      const valUsd=ph.shares*(ph.avg_price_usd||0);
+      merged.push({
+        ticker:ph.ticker,
+        shares:ph.shares,
+        avg_price_usd:ph.avg_price_usd||0,
+        current_price_usd:ph.avg_price_usd||0,
+        current_value_krw:Math.round(valUsd*fx),
+        pnl_pct:0,
+        day_change_pct:0,
+        wr:null,
+        sector:ph.sector||NOBL_UNIVERSE[ph.ticker]||'--',
+        _pending:true
+      });
+    }
+  });
+  return merged;
+}
+
 function wrToLevel(wr){return wr<=-80?3:wr<=-70?2:1;}
 function levelToRatio(lv){return lv>=3?1.0:lv>=2?0.667:0.333;}
 function getStages(){return(G.portfolio&&G.portfolio.signal_stages)||{};}
@@ -463,10 +490,14 @@ function renderAll(){
 // ══ 홈
 function renderHome(){
   const d=G.data;
+  if(!d)return;
   document.getElementById('home-loading').style.display='none';
   document.getElementById('home-content').style.display='block';
   const s=d.portfolio_summary||{};
-  const val=s.total_value_krw||0,pnl=s.total_pnl_pct||0;
+  const allH=mergedHoldings();
+  const pendingVal=allH.filter(h=>h._pending).reduce((a,h)=>a+(h.current_value_krw||0),0);
+  const val=(s.total_value_krw||0)+pendingVal;
+  const pnl=s.total_pnl_pct||0;
   document.getElementById('totalKrw').textContent=val?val.toLocaleString('ko-KR')+'원':'--';
   document.getElementById('totalUsd').textContent=s.total_value_usd?`$${s.total_value_usd.toLocaleString()}`:'--';
   document.getElementById('fxRate').textContent=d.fx_rate?`₩${d.fx_rate.toLocaleString()}`:'--';
@@ -478,20 +509,24 @@ function renderHome(){
   const months=monthsAllocated(startDate);
   const perStock=monthly/30;
   const totalAlloc=monthly*months;
+  const extraDeps=(G.portfolio&&G.portfolio.extra_deposits)||[];
+  const extraTotal=extraDeps.reduce((a,d)=>a+(d.amount_krw||0),0);
+  const totalBudget=totalAlloc+extraTotal;
   const invMap=investedByTicker();
   const totalInv=Object.values(invMap).reduce((a,b)=>a+b,0);
-  const surplus=Math.max(0,totalAlloc-totalInv);
+  const surplus=Math.max(0,totalBudget-totalInv);
   const divs=dividendData();
   const totalDiv=divs.reduce((a,t)=>a+(t.div_krw||0),0);
   const ret=totalInv>0?(((val+totalDiv)-totalInv)/totalInv*100).toFixed(2):'0.00';
+  const holdingsCount=mergedHoldings().length;
 
   document.getElementById('investSummary').innerHTML=[
-    ['📅 배정 개월',months>0?months+'개월':'시작일 설정 필요',''],
-    ['💵 누적 투자금',totalInv>0?totalInv.toLocaleString()+'원':'미입력',''],
-    ['💧 잉여현금',surplus>0?surplus.toLocaleString()+'원':'0원','color:var(--yellow)'],
+    ['💰 누적 배정금 ('+months+'개월)',totalBudget>0?Math.round(totalBudget).toLocaleString()+'원':'시작일 설정 필요','color:var(--blue)'],
+    ['💵 실제 매수금',totalInv>0?Math.round(totalInv).toLocaleString()+'원':'0원',''],
+    ['💧 잉여현금',surplus>0?Math.round(surplus).toLocaleString()+'원':'0원','color:var(--yellow)'],
     ['💰 누적 배당금',totalDiv>0?totalDiv.toLocaleString()+'원':'0원','color:var(--green)'],
     ['📈 수익률',ret+'%',parseFloat(ret)>=0?'color:var(--green)':'color:var(--red)'],
-    ['📦 보유종목',(d.holdings||[]).length+'종목',''],
+    ['📦 보유종목',holdingsCount+'종목',''],
   ].map(([l,v,st])=>`<div class="summary-item"><div class="summary-label">${l}</div><div class="summary-value" style="${st}">${v}</div></div>`).join('');
 
   if(startDate){
@@ -535,7 +570,7 @@ function renderHome(){
 }
 
 function renderHomeChart(){
-  const h=(G.data&&G.data.holdings)||[];if(!h.length)return;
+  const h=mergedHoldings();if(!h.length)return;
   const sorted=[...h].sort((a,b)=>a.pnl_pct-b.pnl_pct);
   if(G.holdingsChart)G.holdingsChart.destroy();
   G.holdingsChart=new Chart(document.getElementById('holdingsChart').getContext('2d'),{
@@ -552,17 +587,18 @@ function renderHomeChart(){
 
 // ══ 보유종목
 function renderHoldings(){
-  const h=(G.data&&G.data.holdings)||[];
+  const h=mergedHoldings();
   const el=document.getElementById('holdingsList');
   if(!h.length){el.innerHTML='<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">보유 종목 없음</div>';return;}
   el.innerHTML=h.map(h=>{
     const pct=h.pnl_pct||0,cls=pct>=0?'pos':'neg';
     const dp=h.day_change_pct||0,dcls=dp>=0?'pos':'neg';
     const wr=h.wr!=null?h.wr.toFixed(1):'--';
-    const wc=h.wr<=-80?'var(--red)':h.wr<=-60?'var(--yellow)':'var(--muted)';
+    const wc=h.wr!=null?(h.wr<=-80?'var(--red)':h.wr<=-60?'var(--yellow)':'var(--muted)'):'var(--muted)';
+    const pendingTag=h._pending?'<span style="font-size:9px;color:var(--yellow);margin-left:6px;border:1px solid var(--yellow);border-radius:4px;padding:1px 5px;">시세 대기</span>':'';
     return`<div class="holding-row">
       <div class="holding-left">
-        <div class="holding-ticker">${h.ticker}</div>
+        <div class="holding-ticker">${h.ticker}${pendingTag}</div>
         <div class="holding-meta">${h.sector||'--'} · ${(h.shares||0).toFixed(4)}주 · WR <span style="color:${wc};font-family:var(--mono);">${wr}</span></div>
       </div>
       <div class="holding-right">
@@ -785,6 +821,7 @@ async function confirmBuy(){
   await savePortfolio();
   closeBuyModal();
   toast(`✅ ${ticker} ${shares}주 매수완료 — 보유/거래 반영됨`);
+  renderHome();
   renderSignals();
   renderHoldings();
   renderTxList();
@@ -864,7 +901,7 @@ function buildMyLine(startDate){
   if(!buys.length)return null;
   const totalCost=buys.reduce((a,tx)=>a+(tx.shares||0)*(tx.price_usd||0)*(tx.fx||1350),0);
   if(totalCost<=0)return null;
-  const h=(G.data&&G.data.holdings)||[];
+  const h=mergedHoldings();
   const totalVal=h.reduce((a,h)=>a+(h.current_value_krw||0),0);
   const totalDiv=dividendData().reduce((a,t)=>a+(t.div_krw||0),0);
   const pct=((totalVal+totalDiv-totalCost)/totalCost)*100;
@@ -978,7 +1015,7 @@ async function submitTx(){
     }
     toast(`✅ ${type==='buy'?'매수':type==='sell'?'매도':'배당재투자'} ${ticker}`);
   }
-  await savePortfolio();clearTxForm();renderTxList();renderDividend();
+  await savePortfolio();clearTxForm();renderHome();renderHoldings();renderTxList();renderDividend();
 }
 
 function clearTxForm(){
