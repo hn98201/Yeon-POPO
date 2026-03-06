@@ -6,9 +6,32 @@
     "wr_threshold": -60,
     "github_repo": "YOUR_USERNAME/YOUR_REPO"
   },
-  "holdings": [],
-  "transactions": [],
+  "holdings": [
+    {
+      "ticker": "KMB",
+      "shares": 0.0583,
+      "avg_price_usd": 102.57,
+      "sector": "필수소비재",
+      "start_date": "2026-03-06"
+    }
+  ],
+  "transactions": [
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "KMB",
+      "shares": 0.0583,
+      "price_usd": 102.57,
+      "fx": 1486,
+      "note": "신호매수 약매수"
+    }
+  ],
   "extra_deposits": [],
-  "signal_stages": {},
+  "signal_stages": {
+    "KMB": {
+      "done": 1,
+      "updated": "2026-03-06"
+    }
+  },
   "signal_passes": []
 }
