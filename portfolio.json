@@ -76,6 +76,13 @@
       "avg_price_usd": 114.76,
       "sector": "경기소비재",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "IBM",
+      "shares": 0.0233,
+      "avg_price_usd": 256.77,
+      "sector": "기술",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -168,6 +175,15 @@
       "price_usd": 114.76,
       "fx": 1487,
       "note": "신호매수 강매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "IBM",
+      "shares": 0.0233,
+      "price_usd": 256.77,
+      "fx": 1487,
+      "note": "신호매수 약매수"
     }
   ],
   "extra_deposits": [],
@@ -210,6 +226,10 @@
     },
     "GPC": {
       "done": 3,
+      "updated": "2026-03-06"
+    },
+    "IBM": {
+      "done": 1,
       "updated": "2026-03-06"
     }
   },
