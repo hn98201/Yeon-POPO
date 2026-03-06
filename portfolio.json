@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "monthly_krw": 800000,
+    "start_date": "2024-01-01",
+    "wr_period": 14,
+    "wr_threshold": -60,
+    "github_repo": "YOUR_USERNAME/YOUR_REPO"
+  },
+  "holdings": [],
+  "transactions": [],
+  "extra_deposits": []
+}
