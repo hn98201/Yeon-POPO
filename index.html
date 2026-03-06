@@ -161,8 +161,18 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         <div class="egg-score" id="eggScore">점수: --</div>
       </div>
     </div>
+    <div id="eggStrategy" class="card" style="display:none;"></div>
     <div class="egg-indicators" id="eggIndicators"></div>
     <div id="signalSummary"></div>
+    <div class="card">
+      <div class="card-title">섹터 비중</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="position:relative;width:180px;height:180px;flex-shrink:0;">
+          <canvas id="sectorChart" width="180" height="180"></canvas>
+        </div>
+        <div id="sectorLegend" style="flex:1;font-size:11px;line-height:2;"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title">보유 종목 수익률</div>
       <div class="chart-wrap"><canvas id="holdingsChart"></canvas></div>
@@ -367,7 +377,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 <div class="toast" id="toast"></div>
 
 <script>
-let G={data:null,portfolio:null,compareChart:null,holdingsChart:null,divChart:null,liveQuotes:{},
+let G={data:null,portfolio:null,compareChart:null,holdingsChart:null,divChart:null,sectorChart:null,liveQuotes:{},
   settings:JSON.parse(localStorage.getItem('pf_settings')||'{}')};
 
 const STAGE_COLORS={1:'#EF4444',2:'#F97316',3:'#F59E0B',4:'#10B981',5:'#3B82F6',6:'#8B5CF6'};
@@ -467,7 +477,7 @@ async function fetchPendingPrices(){
   }
 
   if(updated){
-    renderHome();renderHoldings();renderHomeChart();
+    renderHome();renderHoldings();
   }
 }
 
@@ -589,6 +599,7 @@ function renderHome(){
   document.getElementById('eggDesc').textContent=egg.desc||'--';
   document.getElementById('eggScore').textContent=`종합 점수: ${egg.score||'--'}`;
   document.getElementById('eggCard').style.borderColor=col+'44';
+  renderEggStrategy(stage);
 
   const ind=egg.indicators||{};
   document.getElementById('eggIndicators').innerHTML=[
@@ -609,6 +620,7 @@ function renderHome(){
         return`<div class="signal-chip ${cls}" onclick="showTab('signals')">${s.ticker} ${s.wr.toFixed(0)}</div>`;
       }).join('')}</div>
     </div>`:'';
+  renderSectorChart();
   renderHomeChart();
 }
 
@@ -626,6 +638,110 @@ function renderHomeChart(){
       scales:{x:{ticks:{color:'#64748B',font:{size:9,family:'JetBrains Mono'}},grid:{color:'#1E2D4A'}},
               y:{ticks:{color:'#64748B',font:{size:9},callback:v=>v.toFixed(1)+'%'},grid:{color:'#1E2D4A'}}}}
   });
+}
+
+// ══ 섹터 비중 도넛 차트
+const SECTOR_COLORS={
+  '필수소비재':'#10B981','산업재':'#3B82F6','금융':'#F59E0B','소재':'#8B5CF6',
+  '헬스케어':'#EC4899','경기소비재':'#F97316','유틸리티':'#06B6D4','부동산':'#6366F1',
+  '기술':'#EF4444','에너지':'#84CC16','--':'#64748B'
+};
+
+function renderSectorChart(){
+  const h=mergedHoldings();
+  const el=document.getElementById('sectorChart');
+  const legendEl=document.getElementById('sectorLegend');
+  if(!h.length){
+    legendEl.innerHTML='<div style="color:var(--muted);text-align:center;">보유 종목 없음</div>';
+    return;
+  }
+  const sectorMap={};
+  h.forEach(item=>{
+    const sec=item.sector||'--';
+    sectorMap[sec]=(sectorMap[sec]||0)+(item.current_value_krw||0);
+  });
+  const total=Object.values(sectorMap).reduce((a,b)=>a+b,0);
+  const entries=Object.entries(sectorMap).sort((a,b)=>b[1]-a[1]);
+  const labels=entries.map(([s])=>s);
+  const data=entries.map(([,v])=>v);
+  const colors=entries.map(([s])=>SECTOR_COLORS[s]||'#64748B');
+  const pcts=entries.map(([,v])=>total>0?(v/total*100).toFixed(1):'0');
+
+  if(G.sectorChart)G.sectorChart.destroy();
+  G.sectorChart=new Chart(el.getContext('2d'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#0E1422',borderWidth:2,hoverOffset:6}]},
+    options:{
+      responsive:true,maintainAspectRatio:true,cutout:'62%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0E1422',borderColor:'#1E2D4A',borderWidth:1,
+          titleColor:'#E2E8F0',bodyColor:'#94A3B8',
+          callbacks:{label:c=>{const p=total>0?(c.parsed/total*100).toFixed(1):'0';return` ${c.label}: ${p}% (${Math.round(c.parsed).toLocaleString()}원)`;}}
+        }
+      }
+    }
+  });
+
+  legendEl.innerHTML=entries.map(([s,v],i)=>{
+    const c=colors[i];
+    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${c};flex-shrink:0;"></span>
+      <span style="color:var(--text);flex:1;">${s}</span>
+      <span style="font-family:var(--mono);color:${c};font-weight:600;">${pcts[i]}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ══ 달걀 단계별 전략 섹터 가이드
+const STAGE_STRATEGY={
+  1:{name:'① 하락 초입',desc:'금리 인상 · 경기 과열 후 꺾임',
+    sectors:['필수소비재','헬스케어','유틸리티'],
+    tip:'경기 방어주 중심. 배당 안정성 높은 필수소비재·헬스케어·유틸리티 비중 확대'},
+  2:{name:'② 하락 본격',desc:'경기 둔화 · 실업 증가 · 신용 위축',
+    sectors:['필수소비재','헬스케어','유틸리티'],
+    tip:'현금 비중 유지하며 방어주 저가 매수 기회 포착. 고밸류 성장주 회피'},
+  3:{name:'③ 상승 초입',desc:'금리 인하 시작 · 유동성 회복 조짐',
+    sectors:['금융','산업재','소재','기술'],
+    tip:'금리 인하 수혜 금융주, 경기민감 산업재·소재 선제 매수. 기술주 반등 초기'},
+  4:{name:'④ 상승 본격',desc:'경기 확장 · 기업 실적 개선',
+    sectors:['경기소비재','기술','산업재','금융'],
+    tip:'소비 회복 수혜 경기소비재, 실적 모멘텀 기술주. 사이클 중반 최적 구간'},
+  5:{name:'⑤ 과열 초입',desc:'인플레 압력 · 자산 버블 징후',
+    sectors:['에너지','소재','부동산'],
+    tip:'원자재·에너지 인플레 헤지. 고밸류 성장주 차익실현 시작'},
+  6:{name:'⑥ 과열 본격',desc:'금리 인상 본격화 · 유동성 회수',
+    sectors:['에너지','필수소비재','헬스케어'],
+    tip:'방어적 전환. 에너지·필수소비재 유지, 성장주·고PER 축소'}
+};
+
+function renderEggStrategy(stage){
+  const el=document.getElementById('eggStrategy');
+  const st=STAGE_STRATEGY[stage];
+  if(!st){el.style.display='none';return;}
+  const col=STAGE_COLORS[stage]||'#888';
+  const allH=mergedHoldings();
+  const hasSectors=new Set(allH.map(h=>h.sector||'--'));
+
+  el.style.display='block';
+  el.style.borderColor=col+'33';
+  el.innerHTML=`
+    <div class="card-title" style="color:${col};">📋 ${st.name} — 추천 섹터</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${st.desc}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+      ${st.sectors.map(s=>{
+        const sc=SECTOR_COLORS[s]||'#888';
+        const owned=hasSectors.has(s);
+        return`<span style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;
+          background:${sc}22;border:1px solid ${sc}66;color:${sc};
+          display:flex;align-items:center;gap:4px;">
+          ${owned?'✅':'➕'} ${s}</span>`;
+      }).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--text);line-height:1.7;padding:10px 12px;background:var(--surface);border-radius:10px;">
+      💡 ${st.tip}
+    </div>`;
 }
 
 // ══ 보유종목
