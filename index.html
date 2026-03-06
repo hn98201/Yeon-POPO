@@ -435,7 +435,7 @@ body {
     </div>
   </div>
 
-  <!-- ── 설정 ── -->
+<!-- ── 설정 ── -->
   <div class="section" id="sec-settings">
     <div class="section-header"><h2>⚙️ 설정</h2></div>
     <div class="card">
@@ -481,7 +481,6 @@ body {
   </div>
 
 </div>
-
 <!-- 토스트 -->
 <div class="toast" id="toast"></div>
 
@@ -724,6 +723,11 @@ function renderSignals() {
       sigs.map(s => {
         const cls = s.wr <= -80 ? 'strong' : s.wr <= -70 ? 'mid' : 'weak';
         const levelText = s.wr <= -80 ? '강매수' : s.wr <= -70 ? '중매수' : '약매수';
+        const monthly = parseInt(G.settings.cfgMonthly || 800000);
+        const perStock = monthly / 30;
+        const ratio = s.wr <= -80 ? 1.0 : s.wr <= -70 ? 0.667 : 0.333;
+        const buyKrw = Math.round(perStock * ratio / 100) * 100;
+        const shares = s.price > 0 ? Math.floor(buyKrw / (G.data.fx_rate || 1350) / s.price * 10000) / 10000 : '--';
         return `
           <div class="holding-row">
             <div class="holding-left">
@@ -732,11 +736,16 @@ function renderSignals() {
             </div>
             <div class="holding-right">
               <div class="signal-chip ${cls}" style="justify-content:flex-end;">${levelText}</div>
-              <div style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:4px;">WR ${(s.wr||0).toFixed(1)}</div>
+              <div style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:4px;">
+                WR ${(s.wr||0).toFixed(1)}
+              </div>
+              <div style="font-size:12px;font-family:var(--mono);color:var(--yellow);margin-top:3px;">
+                ≈ ${buyKrw.toLocaleString()}원 (${shares}주)
+              </div>
             </div>
           </div>`;
-      }).join('');
-  }
+      }).join('');  
+  }            
 
   // 30종목 칩
   const c30 = (G.data && G.data.current_30) || [];
