@@ -9,55 +9,6 @@
   "holdings": [],
   "transactions": [],
   "extra_deposits": [],
-  "signal_stages": {
-    "KMB": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "EMR": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "SWK": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "EXPD": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "AFL": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "SPGI": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "AMP": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "NUE": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "LOW": {
-      "done": 3,
-      "updated": "2026-03-06"
-    },
-    "GPC": {
-      "done": 3,
-      "updated": "2026-03-06"
-    },
-    "IBM": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "TXN": {
-      "done": 1,
-      "updated": "2026-03-06"
-    }
-  },
+  "signal_stages": {},
   "signal_passes": []
 }
