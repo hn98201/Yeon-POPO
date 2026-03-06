@@ -62,6 +62,13 @@
       "avg_price_usd": 168.73,
       "sector": "소재",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "LOW",
+      "shares": 0.0715,
+      "avg_price_usd": 250.74,
+      "sector": "경기소비재",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -136,6 +143,15 @@
       "price_usd": 168.73,
       "fx": 1487,
       "note": "신호매수 약매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "LOW",
+      "shares": 0.0715,
+      "price_usd": 250.74,
+      "fx": 1487,
+      "note": "신호매수 강매수"
     }
   ],
   "extra_deposits": [],
@@ -170,6 +186,10 @@
     },
     "NUE": {
       "done": 1,
+      "updated": "2026-03-06"
+    },
+    "LOW": {
+      "done": 3,
       "updated": "2026-03-06"
     }
   },
