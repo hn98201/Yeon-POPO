@@ -41,6 +41,13 @@
       "avg_price_usd": 109.85,
       "sector": "금융",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "SPGI",
+      "shares": 0.0132,
+      "avg_price_usd": 450.83,
+      "sector": "금융",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -88,6 +95,15 @@
       "price_usd": 109.85,
       "fx": 1487,
       "note": "신호매수 약매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "SPGI",
+      "shares": 0.0132,
+      "price_usd": 450.83,
+      "fx": 1487,
+      "note": "신호매수 약매수"
     }
   ],
   "extra_deposits": [],
@@ -109,6 +125,10 @@
       "updated": "2026-03-06"
     },
     "AFL": {
+      "done": 1,
+      "updated": "2026-03-06"
+    },
+    "SPGI": {
       "done": 1,
       "updated": "2026-03-06"
     }
