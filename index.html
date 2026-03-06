@@ -458,7 +458,7 @@ async function loadPortfolio(){
     const r=await fetch(`https://api.github.com/repos/${ghRepo}/contents/${ghFile}`,
       {headers:{Authorization:`token ${ghToken}`,Accept:'application/vnd.github.v3+json'}});
     const j=await r.json();
-    G.portfolio=JSON.parse(atob(j.content.replace(/\n/g,'')));
+    G.portfolio=JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,'')))));
     G.portfolioSha=j.sha;
     G.portfolio.signal_stages=G.portfolio.signal_stages||{};
     G.portfolio.signal_passes=G.portfolio.signal_passes||[];
