@@ -605,13 +605,13 @@ function renderHome(){
   const today=new Date().toISOString().slice(0,10);
   const dirs={};
   if(prevEgg._date&&prevEgg._date!==today){
-    ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy'].forEach(k=>{
+    ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy','pmi','claims','hy_spread'].forEach(k=>{
       if(ind[k]!=null&&prevEgg[k]!=null)dirs[k]=ind[k]-prevEgg[k];
     });
   }
   // 현재 값 저장 (다음 접속 시 비교용)
   if(!prevEgg._date||prevEgg._date!==today){
-    const save={fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,_date:today};
+    const save={fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,pmi:ind.pmi,claims:ind.claims,hy_spread:ind.hy_spread,_date:today};
     localStorage.setItem('egg_history',JSON.stringify(save));
   }
 
@@ -623,7 +623,7 @@ function renderHome(){
     unemp:ind.unemp,unemp_d:dirs.unemp||null,
     cpi_yoy:ind.cpi_yoy,cpi_d:dirs.cpi_yoy||null,
     m2_yoy:ind.m2_yoy,m2_d:dirs.m2_yoy||null,
-    pmi:null,pmi_d:null,claims:null,claims_d:null,hy_spread:null,hy_spread_d:null
+    pmi:ind.pmi||null,pmi_d:dirs.pmi||null,claims:ind.claims||null,claims_d:dirs.claims||null,hy_spread:ind.hy_spread||null,hy_spread_d:dirs.hy_spread||null
   };
   const enhanced=calculateEnhancedStage(ecoData);
   const stage=enhanced?enhanced.stage:(egg.stage||3);
@@ -652,8 +652,15 @@ function renderHome(){
     ['CPI(YoY)',fmtV(ind.cpi_yoy,'%',1),dirArrow(dirs.cpi_yoy||null,false)],
     ['M2(YoY)',fmtV(ind.m2_yoy,'%',1),dirArrow(dirs.m2_yoy||null,true)],
   ];
-  document.getElementById('eggIndicators').style.gridTemplateColumns='repeat(3,1fr)';
-  let indHtml=indRows.map(([l,v,arrow])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`).join('');
+  if(ind.pmi!=null)indRows.push(['ISM PMI',fmtV(ind.pmi,'',1),dirArrow(dirs.pmi||null,true)]);
+  if(ind.claims!=null)indRows.push(['신규실업(천)',(ind.claims/1000).toFixed(0)+'k',dirArrow(dirs.claims||null,false)]);
+  if(ind.hy_spread!=null)indRows.push(['HY스프레드',fmtV(ind.hy_spread,'%',2),dirArrow(dirs.hy_spread||null,false)]);
+  document.getElementById('eggIndicators').style.gridTemplateColumns=`repeat(3,1fr)`;
+  const hasLead=ind.pmi!=null||ind.claims!=null||ind.hy_spread!=null;
+  let indHtml=indRows.map(([l,v,arrow],i)=>{
+    const isLead=i>=6;
+    return`<div class="ind-item${isLead?' ind-new':''}"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`;
+  }).join('');
 
   // 점수 분해
   if(enhanced&&enhanced.scores){
