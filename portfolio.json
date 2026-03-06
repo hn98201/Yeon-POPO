@@ -49,6 +49,10 @@
     "GPC": {
       "done": 3,
       "updated": "2026-03-06"
+    },
+    "IBM": {
+      "done": 1,
+      "updated": "2026-03-06"
     }
   },
   "signal_passes": []
