@@ -749,6 +749,12 @@ function renderHoldings(){
   const h=mergedHoldings();
   const el=document.getElementById('holdingsList');
   if(!h.length){el.innerHTML='<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">보유 종목 없음</div>';return;}
+  const monthly=parseInt(G.settings.cfgMonthly||800000);
+  const startDate=G.settings.cfgStart||'';
+  const months=monthsAllocated(startDate);
+  const perStock=monthly/30;
+  const invMap=investedByTicker();
+
   el.innerHTML=h.map(h=>{
     const pct=h.pnl_pct||0,cls=pct>=0?'pos':'neg';
     const dp=h.day_change_pct||0,dcls=dp>=0?'pos':'neg';
@@ -759,7 +765,13 @@ function renderHoldings(){
         ?'<span style="font-size:9px;color:var(--yellow);margin-left:6px;border:1px solid var(--yellow);border-radius:4px;padding:1px 5px;">시세 조회중…</span>'
         :'<span style="font-size:9px;color:var(--muted);margin-left:6px;border:1px solid var(--border);border-radius:4px;padding:1px 5px;">시세 대기</span>')
       :'';
-    return`<div class="holding-row">
+    const alloc=perStock*months;
+    const inv=invMap[h.ticker]||0;
+    const surplus=Math.max(0,alloc-inv);
+    const progPct=alloc>0?Math.min(100,inv/alloc*100):0;
+    const isDone=surplus<=0;
+
+    return`<div class="holding-row" style="flex-wrap:wrap;">
       <div class="holding-left">
         <div class="holding-ticker">${h.ticker}${pendingTag}</div>
         <div class="holding-meta">${h.sector||'--'} · ${(h.shares||0).toFixed(4)}주 · WR <span style="color:${wc};font-family:var(--mono);">${wr}</span></div>
@@ -772,6 +784,13 @@ function renderHoldings(){
           <span class="${dcls}">${dp>=0?'+':''}${dp.toFixed(2)}%</span>
         </div>
       </div>
+      ${months>0?`<div style="width:100%;margin-top:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:10px;color:var(--muted);">투자 ${Math.round(inv).toLocaleString()}원 / 배정 ${Math.round(alloc).toLocaleString()}원</span>
+          <span style="font-size:10px;font-family:var(--mono);font-weight:600;color:${isDone?'var(--green)':'var(--yellow)'};">${isDone?'✅ 완투':Math.round(surplus).toLocaleString()+'원 잔여'}</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${progPct.toFixed(0)}%;background:${isDone?'var(--green)':'var(--accent)'};"></div></div>
+      </div>`:''}
     </div>`;
   }).join('');
 }
