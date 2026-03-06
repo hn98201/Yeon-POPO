@@ -327,15 +327,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
       <span class="setting-label">Finnhub API Key</span>
       <input type="password" class="setting-input" id="cfgFinnhub" placeholder="발급: finnhub.io" oninput="saveSetting()">
     </div>
-    <div style="font-size:10px;color:var(--muted);padding:4px 0;">prices.json에 없는 신규 매수 종목의 현재가를 자동 조회합니다</div>
-  </div>
-  <div class="card">
-    <div class="card-title">경제지표 (FRED)</div>
-    <div class="setting-row">
-      <span class="setting-label">FRED API Key</span>
-      <input type="password" class="setting-input" id="cfgFred" placeholder="발급: fred.stlouisfed.org" oninput="saveSetting()">
-    </div>
-    <div style="font-size:10px;color:var(--muted);padding:4px 0;">선행지표 3종(ISM PMI · 신규실업 · HY스프레드) + 방향성 분석으로 달걀 단계 정확도 향상</div>
+    <div style="font-size:10px;color:var(--muted);padding:4px 0;">시세 · 환율 · 경제지표를 Finnhub API 하나로 자동 조회합니다</div>
   </div>
   <div class="card">
     <div class="card-title">투자 설정 (매월 12일 자동 배정)</div>
@@ -551,6 +543,7 @@ function renderAll(){
   document.getElementById('updatedAt').textContent=G.data.updated_at||'--';
   renderHome();renderHoldings();renderSignals();renderCompare();renderDividend();renderTxList();renderSettings();
   fetchPendingPrices();
+  fetchLiveFx();
   fetchEnhancedEgg();
 }
 
@@ -604,7 +597,7 @@ function renderHome(){
     </div>`;
   }
 
-  // ═══ 달걀 단계: FRED 보강 > prices.json 순
+  // ═══ 달걀 단계: Finnhub 보강 > prices.json 순
   const enhanced=G._enhancedEgg||null;
   const egg=d.egg||{};
   const stage=enhanced?enhanced.stage:(egg.stage||3);
@@ -621,8 +614,8 @@ function renderHome(){
   document.getElementById('eggCard').style.borderColor=col+'44';
   renderEggStrategy(stage);
 
-  // ═══ 지표 표시: FRED 있으면 9개(방향포함), 없으면 기존 6개
-  const fc=G._fredCache||null;
+  // ═══ 지표 표시: Finnhub 있으면 9개(방향포함), 없으면 기존 6개
+  const fc=G._ecoCache||null;
   const ind=egg.indicators||{};
   let indHtml='';
   if(fc){
@@ -660,7 +653,7 @@ function renderHome(){
       ['CPI(YoY)',ind.cpi_yoy!=null?ind.cpi_yoy.toFixed(1)+'%':'--'],
       ['M2(YoY)',ind.m2_yoy!=null?ind.m2_yoy.toFixed(1)+'%':'--'],
     ].map(([l,v])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}</span></div>`).join('');
-    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:6px;">💡 FRED API 키를 설정하면 선행지표 3종 + 방향성 분석이 추가됩니다</div>`;
+    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:6px;">💡 Finnhub API 키를 설정하면 환율 · VIX · 선행지표 실시간 반영 + 방향성 분석이 추가됩니다</div>`;
   }
   document.getElementById('eggIndicators').innerHTML=indHtml;
 
@@ -798,156 +791,174 @@ function renderEggStrategy(stage){
 }
 
 // ══════════════════════════════════════════════
-// ══ 선행지표 보강 달걀 엔진 (FRED API)
+// ══ Finnhub 통합 엔진 (시세 · 환율 · 경제지표)
 // ══════════════════════════════════════════════
 
-const FRED_SERIES={
-  fed_rate:'FEDFUNDS',spread:'T10Y2Y',vix:'VIXCLS',unemp:'UNRATE',
-  cpi:'CPIAUCSL',m2:'WM2NS',pmi:'ISM/MAN_PMI',claims:'ICSA',hy_spread:'BAMLH0A0HYM2'
+// ── 환율 실시간 갱신
+async function fetchLiveFx(){
+  const apiKey=G.settings.cfgFinnhub||'';
+  if(!apiKey)return;
+  if(G._fxCache&&(Date.now()-G._fxCache._ts)<120000)return;
+  try{
+    const r=await fetch(`https://finnhub.io/api/v1/forex/rates?base=USD&token=${apiKey}`);
+    const j=await r.json();
+    if(j&&j.quote&&j.quote.KRW){
+      G._fxCache={rate:j.quote.KRW,_ts:Date.now()};
+      if(G.data)G.data.fx_rate=j.quote.KRW;
+      const rateStr=j.quote.KRW.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      document.getElementById('fxRate').innerHTML=`₩${rateStr} <span style="font-size:8px;color:var(--green);border:1px solid var(--green);border-radius:3px;padding:0 3px;vertical-align:middle;">LIVE</span>`;
+      renderHome();renderHoldings();
+    }
+  }catch(e){console.warn('FX 조회 실패',e);}
+}
+
+// ── Finnhub 경제지표 조회 + 방향성 추적
+const FINNHUB_ECO={
+  pmi:{code:'MA_NAPM_PMI',name:'ISM PMI',label:'ISM PMI'},
+  claims:{code:'MA_IC',name:'Initial Claims',label:'신규실업(천)'},
+  fed_rate:{code:'MA_FED_FUNDS',name:'Fed Funds',label:'기준금리'},
+  cpi:{code:'MA_CPI_YOY',name:'CPI YoY',label:'CPI(YoY)'},
+  unemp:{code:'MA_UNEMP',name:'Unemployment',label:'실업률'},
 };
 
-async function fetchFredSeries(seriesId,apiKey,limit=15){
+async function fetchFinnhubEco(code,apiKey){
   try{
-    const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=${limit}`;
-    const r=await fetch(url);const j=await r.json();
-    return(j.observations||[]).map(o=>({date:o.date,val:parseFloat(o.value)})).filter(o=>!isNaN(o.val)).reverse();
-  }catch(e){console.warn(`FRED ${seriesId} 실패`,e);return[];}
-}
-
-function calcYoY(series){
-  if(series.length<13)return{current:series.length?series[series.length-1].val:null,yoy:null,dir:null};
-  const cur=series[series.length-1].val;
-  const y1=series[series.length-13].val;
-  const yoy=y1>0?((cur-y1)/y1*100):null;
-  const m3=series.length>=4?series[series.length-4].val:null;
-  const dir3=m3!=null&&y1>0?((cur-m3)/m3*100):null;
-  return{current:cur,yoy,dir:dir3};
-}
-
-function calcDir(series,lookback=3){
-  if(series.length<lookback+1)return{current:series.length?series[series.length-1].val:null,prev:null,delta:null};
-  const cur=series[series.length-1].val;
-  const prev=series[series.length-1-lookback].val;
-  return{current:cur,prev,delta:cur-prev};
+    const r=await fetch(`https://finnhub.io/api/v1/economic?code=${code}&token=${apiKey}`);
+    const j=await r.json();
+    if(Array.isArray(j)&&j.length>0){
+      const sorted=j.sort((a,b)=>a.date.localeCompare(b.date));
+      return sorted.slice(-15);
+    }
+    return[];
+  }catch(e){return[];}
 }
 
 async function fetchEnhancedEgg(){
-  const apiKey=G.settings.cfgFred||'';
+  const apiKey=G.settings.cfgFinnhub||'';
   if(!apiKey)return;
-  if(G._fredCache&&(Date.now()-G._fredCache._ts)<300000)return;
+  if(G._ecoCache&&(Date.now()-G._ecoCache._ts)<300000)return;
 
-  toast('📊 FRED 경제지표 조회 중...');
-  const results={};
-  const fetches={
-    fed_rate:fetchFredSeries('FEDFUNDS',apiKey),
-    spread:fetchFredSeries('T10Y2Y',apiKey),
-    vix:fetchFredSeries('VIXCLS',apiKey,60),
-    unemp:fetchFredSeries('UNRATE',apiKey),
-    cpi:fetchFredSeries('CPIAUCSL',apiKey),
-    m2:fetchFredSeries('WM2NS',apiKey),
-    pmi:fetchFredSeries('NAPM',apiKey),
-    claims:fetchFredSeries('ICSA',apiKey,30),
-    hy_spread:fetchFredSeries('BAMLH0A0HYM2',apiKey,60)
+  toast('📊 경제지표 조회 중...');
+
+  // prices.json 기본 지표 기반 + 방향성 추적
+  const egg=(G.data&&G.data.egg)||{};
+  const ind=egg.indicators||{};
+  const prev=JSON.parse(localStorage.getItem('egg_history')||'{}');
+  const now=new Date().toISOString().slice(0,10);
+
+  // 현재 값 저장 (방향성 비교용)
+  const cur={
+    fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,
+    unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,
+    _date:now
   };
 
-  const keys=Object.keys(fetches);
-  const vals=await Promise.all(Object.values(fetches));
-  keys.forEach((k,i)=>results[k]=vals[i]);
+  // Finnhub 경제 API로 선행지표 시도
+  let pmiVal=null,claimsVal=null;
+  const codes=Object.entries(FINNHUB_ECO);
+  for(const [key,cfg] of codes){
+    try{
+      const data=await fetchFinnhubEco(cfg.code,apiKey);
+      if(data.length>0){
+        const latest=data[data.length-1];
+        const prev3=data.length>=4?data[data.length-4]:null;
+        if(key==='pmi'){pmiVal={current:latest.value,delta:prev3?(latest.value-prev3.value):null};}
+        if(key==='claims'){claimsVal={current:latest.value,delta:prev3?(latest.value-prev3.value):null};}
+        if(key==='fed_rate'&&cur.fed_rate==null)cur.fed_rate=latest.value;
+        if(key==='cpi'&&cur.cpi_yoy==null)cur.cpi_yoy=latest.value;
+        if(key==='unemp'&&cur.unemp==null)cur.unemp=latest.value;
+      }
+    }catch(e){}
+  }
 
-  const fr=calcDir(results.fed_rate);
-  const sp=calcDir(results.spread);
-  const vx=calcDir(results.vix,5);
-  const un=calcDir(results.unemp);
-  const cp=calcYoY(results.cpi);
-  const m2=calcYoY(results.m2);
-  const pm=calcDir(results.pmi);
-  const cl=calcDir(results.claims,4);
-  const hy=calcDir(results.hy_spread,5);
+  // VIX를 Finnhub quote로 시도 (CBOE VIX 지수)
+  let vixLive=null;
+  try{
+    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=VXX&token=${apiKey}`);
+    const q=await r.json();
+    if(q&&q.c>0){vixLive={current:q.c,dp:q.dp||0};}
+  }catch(e){}
 
-  G._fredCache={
-    fed_rate:fr.current, fed_rate_d:fr.delta,
-    spread:sp.current, spread_d:sp.delta,
-    vix:vx.current, vix_d:vx.delta,
-    unemp:un.current, unemp_d:un.delta,
-    cpi_yoy:cp.yoy, cpi_d:cp.dir,
-    m2_yoy:m2.yoy, m2_d:m2.dir,
-    pmi:pm.current, pmi_d:pm.delta,
-    claims:cl.current, claims_d:cl.delta,
-    hy_spread:hy.current, hy_spread_d:hy.delta,
+  // 방향성 계산 (이전 저장값 대비)
+  const prevDate=prev._date||'';
+  const daysDiff=prevDate?(Math.floor((new Date(now)-new Date(prevDate))/(864e5))):999;
+  const dirs={};
+  if(daysDiff>=1&&prev._date){
+    ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy'].forEach(k=>{
+      if(cur[k]!=null&&prev[k]!=null)dirs[k]=cur[k]-prev[k];
+    });
+  }
+
+  // 저장 (최소 1일 간격)
+  if(daysDiff>=1){
+    localStorage.setItem('egg_history',JSON.stringify(cur));
+  }
+
+  G._ecoCache={
+    fed_rate:cur.fed_rate, fed_rate_d:dirs.fed_rate||null,
+    spread:cur.spread, spread_d:dirs.spread||null,
+    vix:vixLive?vixLive.current:cur.vix, vix_d:vixLive?vixLive.dp:(dirs.vix||null),
+    unemp:cur.unemp, unemp_d:dirs.unemp||null,
+    cpi_yoy:cur.cpi_yoy, cpi_d:dirs.cpi_yoy||null,
+    m2_yoy:cur.m2_yoy, m2_d:dirs.m2_yoy||null,
+    pmi:pmiVal?pmiVal.current:null, pmi_d:pmiVal?pmiVal.delta:null,
+    claims:claimsVal?claimsVal.current:null, claims_d:claimsVal?claimsVal.delta:null,
+    hy_spread:null, hy_spread_d:null,
     _ts:Date.now()
   };
 
-  const enhanced=calculateEnhancedStage(G._fredCache);
+  const enhanced=calculateEnhancedStage(G._ecoCache);
   G._enhancedEgg=enhanced;
   renderHome();
-  toast('✅ 선행지표 반영 완료');
+  toast('✅ 경제지표 반영 완료');
 }
 
 // ═══ 방향성 + 절대수준 기반 종합 스코어링
 function calculateEnhancedStage(ind){
-  // 각 지표를 1~6 스코어 (1=하락초입, 6=과열본격)
-  // 절대 수준 점수 (level) + 방향 점수 (dir) → 가중 평균
   const scores=[];
 
-  // ── 기준금리: 높으면 과열/긴축, 낮으면 완화/회복
   if(ind.fed_rate!=null){
     let lv=ind.fed_rate<=1?3:ind.fed_rate<=2?3.5:ind.fed_rate<=3?4:ind.fed_rate<=4?4.5:ind.fed_rate<=5?5:5.5;
     let dr=0;
     if(ind.fed_rate_d!=null){dr=ind.fed_rate_d>0.25?1:ind.fed_rate_d>0?0.3:ind.fed_rate_d<-0.25?-1:-0.3;}
     scores.push({name:'기준금리',score:clamp(lv+dr),weight:1.0,type:'lag'});
   }
-
-  // ── 10Y-2Y 스프레드: 역전=침체 신호, 양전환=회복
   if(ind.spread!=null){
     let lv=ind.spread<-0.5?1.5:ind.spread<0?2:ind.spread<0.5?3:ind.spread<1?3.5:ind.spread<1.5?4:4.5;
     let dr=0;
     if(ind.spread_d!=null){dr=ind.spread_d>0.2?0.5:ind.spread_d>0?0.2:ind.spread_d<-0.2?-0.5:-0.2;}
     scores.push({name:'장단기스프레드',score:clamp(lv+dr),weight:1.2,type:'lead'});
   }
-
-  // ── VIX: 높으면 공포(바닥근처), 낮으면 안도(고점근처)
   if(ind.vix!=null){
     let lv=ind.vix>=35?1.5:ind.vix>=28?2:ind.vix>=22?2.5:ind.vix>=18?3.5:ind.vix>=14?4.5:5.5;
     let dr=0;
     if(ind.vix_d!=null){dr=ind.vix_d>5?-0.8:ind.vix_d>2?-0.3:ind.vix_d<-5?0.8:ind.vix_d<-2?0.3:0;}
     scores.push({name:'VIX',score:clamp(lv+dr),weight:0.8,type:'sent'});
   }
-
-  // ── 실업률: 높으면 침체, 낮으면 호황 — 후행이므로 방향성 더 중시
   if(ind.unemp!=null){
     let lv=ind.unemp>=7?1.5:ind.unemp>=5.5?2:ind.unemp>=4.5?3:ind.unemp>=3.8?4:ind.unemp>=3.3?4.5:5;
     let dr=0;
     if(ind.unemp_d!=null){dr=ind.unemp_d>0.3?-1.2:ind.unemp_d>0.1?-0.5:ind.unemp_d<-0.3?1.2:ind.unemp_d<-0.1?0.5:0;}
     scores.push({name:'실업률',score:clamp(lv+dr),weight:0.8,type:'lag'});
   }
-
-  // ── CPI YoY: 높으면 과열, 낮으면 침체/디플레
   if(ind.cpi_yoy!=null){
     let lv=ind.cpi_yoy<=1?2:ind.cpi_yoy<=2?3:ind.cpi_yoy<=3?3.5:ind.cpi_yoy<=4?4.5:ind.cpi_yoy<=6?5.5:6;
     let dr=0;
     if(ind.cpi_d!=null){dr=ind.cpi_d>0.5?0.5:ind.cpi_d>0?0.2:ind.cpi_d<-0.5?-0.5:-0.2;}
     scores.push({name:'CPI YoY',score:clamp(lv+dr),weight:0.7,type:'lag'});
   }
-
-  // ── M2 YoY: 유동성 팽창=상승, 수축=하락
   if(ind.m2_yoy!=null){
     let lv=ind.m2_yoy<=-2?1.5:ind.m2_yoy<=0?2:ind.m2_yoy<=3?3:ind.m2_yoy<=6?3.5:ind.m2_yoy<=10?4.5:5.5;
     let dr=0;
     if(ind.m2_d!=null){dr=ind.m2_d>1?0.5:ind.m2_d>0?0.2:ind.m2_d<-1?-0.5:-0.2;}
     scores.push({name:'M2유동성',score:clamp(lv+dr),weight:0.8,type:'lag'});
   }
-
-  // ═══ 선행지표 3종 (가중치 높음) ═══
-
-  // ── ISM PMI: >55 확장, <45 수축 — 핵심 선행
   if(ind.pmi!=null){
     let lv=ind.pmi<=42?1.5:ind.pmi<=46?2:ind.pmi<=49?2.5:ind.pmi<=51?3.5:ind.pmi<=55?4:ind.pmi<=58?5:5.5;
     let dr=0;
     if(ind.pmi_d!=null){dr=ind.pmi_d>2?0.8:ind.pmi_d>0?0.3:ind.pmi_d<-2?-0.8:ind.pmi_d<0?-0.3:0;}
     scores.push({name:'ISM PMI',score:clamp(lv+dr),weight:1.5,type:'lead'});
   }
-
-  // ── 신규 실업수당: <220k 건강, >300k 위험 — 선행
   if(ind.claims!=null){
     const ck=ind.claims/1000;
     let lv=ck>=350?1.5:ck>=300?2:ck>=260?2.5:ck>=230?3.5:ck>=210?4.5:5;
@@ -955,8 +966,6 @@ function calculateEnhancedStage(ind){
     if(ind.claims_d!=null){const dk=ind.claims_d/1000;dr=dk>30?-1:dk>10?-0.4:dk<-30?1:dk<-10?0.4:0;}
     scores.push({name:'신규실업',score:clamp(lv+dr),weight:1.3,type:'lead'});
   }
-
-  // ── HY 스프레드: 높으면 신용위축(하락), 낮으면 리스크온(상승)
   if(ind.hy_spread!=null){
     let lv=ind.hy_spread>=7?1.5:ind.hy_spread>=5?2:ind.hy_spread>=4?2.5:ind.hy_spread>=3.5?3.5:ind.hy_spread>=3?4.5:5.5;
     let dr=0;
@@ -965,21 +974,16 @@ function calculateEnhancedStage(ind){
   }
 
   if(!scores.length)return null;
-
   const totalW=scores.reduce((a,s)=>a+s.weight,0);
   const weighted=scores.reduce((a,s)=>a+s.score*s.weight,0)/totalW;
   const stage=Math.round(clamp(weighted));
-
   const DESCS={1:'① 하락 초입',2:'② 하락 본격',3:'③ 상승 초입',4:'④ 상승 본격',5:'⑤ 과열 초입',6:'⑥ 과열 본격'};
-
   return{stage,score:weighted.toFixed(2),desc:DESCS[stage]||'--',scores,indicators:ind};
 }
 
 function clamp(v){return Math.max(1,Math.min(6,v));}
 
 function dirArrow(delta,invertColor){
-  // invertColor=false: 상승=빨강(악화), 하락=초록(개선) → 금리,VIX,실업률,CPI,HY,실업수당
-  // invertColor=true:  상승=초록(개선), 하락=빨강(악화) → 스프레드,M2,PMI
   if(delta==null)return'';
   if(Math.abs(delta)<0.01)return'<span class="ind-dir flat">→</span>';
   const isUp=delta>0;
@@ -1482,7 +1486,6 @@ function saveSetting(){
   G.settings.cfgStart=document.getElementById('cfgStart').value;
   G.settings.cfgWrThr=document.getElementById('cfgWrThr').value;
   G.settings.cfgFinnhub=document.getElementById('cfgFinnhub').value;
-  G.settings.cfgFred=document.getElementById('cfgFred').value;
   localStorage.setItem('pf_settings',JSON.stringify(G.settings));
 }
 
@@ -1495,7 +1498,6 @@ function renderSettings(){
   document.getElementById('cfgStart').value=s.cfgStart||'';
   document.getElementById('cfgWrThr').value=s.cfgWrThr||'-60';
   document.getElementById('cfgFinnhub').value=s.cfgFinnhub||'';
-  document.getElementById('cfgFred').value=s.cfgFred||'';
   const deps=(G.portfolio&&G.portfolio.extra_deposits)||[];
   document.getElementById('extraDepList').innerHTML=!deps.length
     ?'<div style="font-size:12px;color:var(--muted);">추가 입금 내역 없음</div>'
