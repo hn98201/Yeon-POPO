@@ -954,7 +954,7 @@ function saveSetting() {
   G.settings.cfgStart   = document.getElementById('cfgStart').value;
   G.settings.cfgWrThr   = document.getElementById('cfgWrThr').value;
   localStorage.setItem('pf_settings', JSON.stringify(G.settings));
-  toast('⚙️ 설정 저장됨');
+  // toast 제거 (매 글자마다 뜨는 것 방지)
 }
 
 function renderSettings() {
