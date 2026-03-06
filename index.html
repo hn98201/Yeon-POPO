@@ -286,7 +286,6 @@ body {
       <div class="spinner"></div>데이터 로딩 중...
     </div>
     <div id="home-content" style="display:none;">
-      <!-- 총자산 -->
       <div class="asset-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
@@ -305,7 +304,6 @@ body {
         </div>
       </div>
 
-      <!-- 달걀 단계 -->
       <div class="egg-card" id="eggCard">
         <div class="egg-icon" id="eggIcon">🥚</div>
         <div class="egg-info" style="flex:1;">
@@ -315,11 +313,7 @@ body {
         </div>
       </div>
       <div class="egg-indicators" id="eggIndicators"></div>
-
-      <!-- 신호 요약 -->
       <div id="signalSummary"></div>
-
-      <!-- 미니 차트 -->
       <div class="card">
         <div class="card-title">보유 종목 수익률</div>
         <div class="chart-wrap"><canvas id="holdingsChart"></canvas></div>
@@ -340,9 +334,7 @@ body {
 
   <!-- ── 비교차트 ── -->
   <div class="section" id="sec-compare">
-    <div class="section-header">
-      <h2>📈 수익률 비교</h2>
-    </div>
+    <div class="section-header"><h2>📈 수익률 비교</h2></div>
     <div class="card">
       <div style="margin-bottom:10px;">
         <label class="form-label">비교 시작일</label>
@@ -365,9 +357,7 @@ body {
 
   <!-- ── 신호 ── -->
   <div class="section" id="sec-signals">
-    <div class="section-header">
-      <h2>🔔 매수 신호</h2>
-    </div>
+    <div class="section-header"><h2>🔔 매수 신호</h2></div>
     <div id="signalDetail" class="card">
       <div class="loading"><div class="spinner"></div>로딩 중...</div>
     </div>
@@ -379,9 +369,7 @@ body {
 
   <!-- ── 거래 입력 ── -->
   <div class="section" id="sec-history">
-    <div class="section-header">
-      <h2>📝 거래 히스토리 입력</h2>
-    </div>
+    <div class="section-header"><h2>📝 거래 히스토리 입력</h2></div>
     <div class="card">
       <div class="card-title">새 거래 추가</div>
       <div class="form-group">
@@ -427,15 +415,13 @@ body {
       </div>
       <button class="btn btn-primary" onclick="submitTx()">✅ 거래 기록 저장</button>
     </div>
-
-    <!-- 거래내역 리스트 -->
     <div class="card">
       <div class="card-title">최근 거래내역</div>
       <div id="txList"></div>
     </div>
   </div>
 
-<!-- ── 설정 ── -->
+  <!-- ── 설정 ── -->
   <div class="section" id="sec-settings">
     <div class="section-header"><h2>⚙️ 설정</h2></div>
     <div class="card">
@@ -481,6 +467,7 @@ body {
   </div>
 
 </div>
+
 <!-- 토스트 -->
 <div class="toast" id="toast"></div>
 
@@ -590,7 +577,6 @@ function renderHome() {
   document.getElementById('home-loading').style.display = 'none';
   document.getElementById('home-content').style.display = 'block';
 
-  // 총자산
   const s = d.portfolio_summary || {};
   const val_krw = s.total_value_krw || 0;
   const pnl_pct = s.total_pnl_pct || 0;
@@ -605,7 +591,6 @@ function renderHome() {
   badge.textContent = pnl_pct >= 0 ? `+${pnl_pct.toFixed(2)}%` : `${pnl_pct.toFixed(2)}%`;
   badge.className = 'pnl-badge ' + (pnl_pct >= 0 ? 'pos' : 'neg');
 
-  // 달걀 단계
   const egg = d.egg || {};
   const stage = egg.stage || 3;
   const col = STAGE_COLORS[stage] || '#888';
@@ -616,7 +601,6 @@ function renderHome() {
   document.getElementById('eggScore').textContent = `종합 점수: ${egg.score || '--'}`;
   document.getElementById('eggCard').style.borderColor = col + '44';
 
-  // 지표
   const ind = egg.indicators || {};
   const indItems = [
     ['기준금리', ind.fed_rate != null ? ind.fed_rate.toFixed(2) + '%' : '--'],
@@ -630,7 +614,6 @@ function renderHome() {
     `<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}</span></div>`
   ).join('');
 
-  // 신호 요약
   const sigs = d.active_signals || [];
   if (sigs.length > 0) {
     document.getElementById('signalSummary').innerHTML = `
@@ -645,7 +628,6 @@ function renderHome() {
     document.getElementById('signalSummary').innerHTML = '';
   }
 
-  // 홈 차트
   renderHomeChart();
 }
 
@@ -666,11 +648,8 @@ function renderHomeChart() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#64748B', font: { size: 9, family: 'JetBrains Mono' } },
-             grid: { color: '#1E2D4A' } },
-        y: { ticks: { color: '#64748B', font: { size: 9 },
-             callback: v => v.toFixed(1) + '%' },
-             grid: { color: '#1E2D4A' } }
+        x: { ticks: { color: '#64748B', font: { size: 9, family: 'JetBrains Mono' } }, grid: { color: '#1E2D4A' } },
+        y: { ticks: { color: '#64748B', font: { size: 9 }, callback: v => v.toFixed(1) + '%' }, grid: { color: '#1E2D4A' } }
       }
     }
   });
@@ -744,10 +723,9 @@ function renderSignals() {
               </div>
             </div>
           </div>`;
-      }).join('');  
-  }            
+      }).join('');
+  }
 
-  // 30종목 칩
   const c30 = (G.data && G.data.current_30) || [];
   const el30 = document.getElementById('current30List');
   el30.innerHTML = c30.map(t => {
@@ -766,10 +744,7 @@ function renderCompare() {
   const startDate = G.settings.cfgStart || G.data?.settings?.start_date || '';
   if (startDate) document.getElementById('compareStart').value = startDate;
 
-  // 범례
-  const legendColors = {
-    'VOO': '#F97316', 'QQQ': '#EF4444', 'NOBL': '#8B5CF6', '내 포트폴리오': '#10B981'
-  };
+  const legendColors = { 'VOO': '#F97316', 'QQQ': '#EF4444', 'NOBL': '#8B5CF6', '내 포트폴리오': '#10B981' };
   document.getElementById('compareLegend').innerHTML =
     Object.entries(legendColors).map(([k,c]) =>
       `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);">
@@ -777,7 +752,6 @@ function renderCompare() {
       </div>`
     ).join('');
 
-  // 수익률 요약
   const statsEl = document.getElementById('compareStats');
   const stats = Object.entries(bm).map(([t, d]) => {
     if (!d.pct || d.pct.length === 0) return '';
@@ -815,20 +789,16 @@ function buildCompareChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#0E1422',
-          borderColor: '#1E2D4A', borderWidth: 1,
+          backgroundColor: '#0E1422', borderColor: '#1E2D4A', borderWidth: 1,
           titleColor: '#E2E8F0', bodyColor: '#94A3B8',
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y>=0?'+':''}${ctx.parsed.y.toFixed(2)}%`
-          }
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y>=0?'+':''}${ctx.parsed.y.toFixed(2)}%` }
         }
       },
       scales: {
         x: { type:'time', time:{ unit:'month', displayFormats:{ month:'yy.MM' } },
              ticks:{ color:'#64748B', font:{size:9} }, grid:{ color:'#1E2D4A' } },
-        y: { ticks:{ color:'#64748B', font:{size:9},
-             callback: v => v.toFixed(0)+'%' }, grid:{ color:'#1E2D4A' },
-             zero: true }
+        y: { ticks:{ color:'#64748B', font:{size:9}, callback: v => v.toFixed(0)+'%' },
+             grid:{ color:'#1E2D4A' }, zero: true }
       }
     }
   });
@@ -859,9 +829,9 @@ function populateTickerSelect() {
 
 async function submitTx() {
   await loadPortfolio();
-  const type   = document.getElementById('txType').value;
-  const date   = document.getElementById('txDate').value;
-  const note   = document.getElementById('txNote').value;
+  const type = document.getElementById('txType').value;
+  const date = document.getElementById('txDate').value;
+  const note = document.getElementById('txNote').value;
 
   if (!date) { toast('❌ 날짜를 입력하세요'); return; }
 
@@ -878,11 +848,9 @@ async function submitTx() {
     const fx     = parseFloat(document.getElementById('txFx').value) || 1350;
     if (!ticker || !shares || !price) { toast('❌ 필수 항목을 입력하세요'); return; }
 
-    // 거래 기록
     G.portfolio.transactions = G.portfolio.transactions || [];
     G.portfolio.transactions.push({ date, type, ticker, shares, price_usd: price, fx, note });
 
-    // 보유 종목 업데이트
     G.portfolio.holdings = G.portfolio.holdings || [];
     const idx = G.portfolio.holdings.findIndex(h => h.ticker === ticker);
     if (type === 'buy' || type === 'dividend') {
@@ -890,7 +858,7 @@ async function submitTx() {
         const h = G.portfolio.holdings[idx];
         const totalShares = h.shares + shares;
         const totalCost   = h.shares * h.avg_price_usd + shares * price;
-        h.shares       = totalShares;
+        h.shares        = totalShares;
         h.avg_price_usd = totalCost / totalShares;
       } else {
         G.portfolio.holdings.push({
@@ -930,7 +898,7 @@ function renderTxList() {
     return;
   }
   const sorted = [...txns].reverse().slice(0, 30);
-  const typeMap = { buy:'매수', sell:'매도', dividend:'배당', deposit:'입금' };
+  const typeMap   = { buy:'매수', sell:'매도', dividend:'배당', deposit:'입금' };
   const typeClass = { buy:'tx-buy', sell:'tx-sell', dividend:'tx-dividend', deposit:'tx-buy' };
   el.innerHTML = sorted.map(tx => `
     <div class="tx-row">
@@ -944,38 +912,33 @@ function renderTxList() {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:12px;font-family:var(--mono);">
-          ${tx.shares ? tx.shares.toFixed(4)+'주' : ''}
-        </div>
-        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">
-          ${tx.price_usd ? '$'+tx.price_usd.toFixed(2) : ''}
-        </div>
+        <div style="font-size:12px;font-family:var(--mono);">${tx.shares ? tx.shares.toFixed(4)+'주' : ''}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">${tx.price_usd ? '$'+tx.price_usd.toFixed(2) : ''}</div>
       </div>
     </div>`).join('');
 }
 
 // ── 설정 ──────────────────────────────────────────────────────
 function saveSetting() {
-  G.settings.ghToken  = document.getElementById('ghToken').value;
-  G.settings.ghRepo   = document.getElementById('ghRepo').value;
-  G.settings.ghFile   = document.getElementById('ghFile').value || 'portfolio.json';
+  G.settings.ghToken    = document.getElementById('ghToken').value;
+  G.settings.ghRepo     = document.getElementById('ghRepo').value;
+  G.settings.ghFile     = document.getElementById('ghFile').value || 'portfolio.json';
   G.settings.cfgMonthly = document.getElementById('cfgMonthly').value;
   G.settings.cfgStart   = document.getElementById('cfgStart').value;
   G.settings.cfgWrThr   = document.getElementById('cfgWrThr').value;
   localStorage.setItem('pf_settings', JSON.stringify(G.settings));
-  // toast 제거 (매 글자마다 뜨는 것 방지)
+  // toast 없음 — 글자 입력마다 뜨는 것 방지
 }
 
 function renderSettings() {
   const s = G.settings;
-  document.getElementById('ghToken').value    = s.ghToken  || '';
-  document.getElementById('ghRepo').value     = s.ghRepo   || '';
-  document.getElementById('ghFile').value     = s.ghFile   || 'portfolio.json';
-  document.getElementById('cfgMonthly').value = s.cfgMonthly || '800000';
-  document.getElementById('cfgStart').value   = s.cfgStart   || '';
-  document.getElementById('cfgWrThr').value   = s.cfgWrThr   || '-60';
+  document.getElementById('ghToken').value    = s.ghToken     || '';
+  document.getElementById('ghRepo').value     = s.ghRepo      || '';
+  document.getElementById('ghFile').value     = s.ghFile      || 'portfolio.json';
+  document.getElementById('cfgMonthly').value = s.cfgMonthly  || '800000';
+  document.getElementById('cfgStart').value   = s.cfgStart    || '';
+  document.getElementById('cfgWrThr').value   = s.cfgWrThr    || '-60';
 
-  // 추가입금 목록
   const deps = (G.portfolio && G.portfolio.extra_deposits) || [];
   document.getElementById('extraDepList').innerHTML = deps.length === 0
     ? '<div style="font-size:12px;color:var(--muted);">추가 입금 내역 없음</div>'
@@ -1030,7 +993,6 @@ function toast(msg) {
 
 // ── 초기화 ────────────────────────────────────────────────────
 async function init() {
-  // 오늘 날짜 기본값
   document.getElementById('txDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('newDepDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('compareStart').value =
