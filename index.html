@@ -544,7 +544,6 @@ function renderAll(){
   renderHome();renderHoldings();renderSignals();renderCompare();renderDividend();renderTxList();renderSettings();
   fetchPendingPrices();
   fetchLiveFx();
-  fetchEnhancedEgg();
 }
 
 // ══ 홈
@@ -597,12 +596,41 @@ function renderHome(){
     </div>`;
   }
 
-  // ═══ 달걀 단계: Finnhub 보강 > prices.json 순
-  const enhanced=G._enhancedEgg||null;
+  // ═══ 달걀 단계: prices.json 기본 + 방향성 동기 계산
   const egg=d.egg||{};
+  const ind=egg.indicators||{};
+
+  // 방향성: localStorage에서 이전 값과 비교 (동기, API 불필요)
+  const prevEgg=JSON.parse(localStorage.getItem('egg_history')||'{}');
+  const today=new Date().toISOString().slice(0,10);
+  const dirs={};
+  if(prevEgg._date&&prevEgg._date!==today){
+    ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy'].forEach(k=>{
+      if(ind[k]!=null&&prevEgg[k]!=null)dirs[k]=ind[k]-prevEgg[k];
+    });
+  }
+  // 현재 값 저장 (다음 접속 시 비교용)
+  if(!prevEgg._date||prevEgg._date!==today){
+    const save={fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,_date:today};
+    localStorage.setItem('egg_history',JSON.stringify(save));
+  }
+
+  // 스코어링 (동기)
+  const ecoData={
+    fed_rate:ind.fed_rate,fed_rate_d:dirs.fed_rate||null,
+    spread:ind.spread,spread_d:dirs.spread||null,
+    vix:ind.vix,vix_d:dirs.vix||null,
+    unemp:ind.unemp,unemp_d:dirs.unemp||null,
+    cpi_yoy:ind.cpi_yoy,cpi_d:dirs.cpi_yoy||null,
+    m2_yoy:ind.m2_yoy,m2_d:dirs.m2_yoy||null,
+    pmi:null,pmi_d:null,claims:null,claims_d:null,hy_spread:null,hy_spread_d:null
+  };
+  const enhanced=calculateEnhancedStage(ecoData);
   const stage=enhanced?enhanced.stage:(egg.stage||3);
   const eggScore=enhanced?enhanced.score:(egg.score||'--');
   const eggDesc=enhanced?enhanced.desc:(egg.desc||'--');
+  const hasDirs=Object.keys(dirs).length>0;
+
   const col=STAGE_COLORS[stage]||'#888';
   const icons=['','🥚','🐣','🐥','🐔','🦅','🦁'];
   document.getElementById('eggIcon').textContent=icons[stage]||'🥚';
@@ -610,56 +638,36 @@ function renderHome(){
   document.getElementById('eggStage').textContent=`${stage}단계`;
   document.getElementById('eggStage').style.color=col;
   document.getElementById('eggDesc').textContent=eggDesc;
-  document.getElementById('eggScore').textContent=`종합 점수: ${eggScore}${enhanced?' (방향성 반영)':''}`;
+  document.getElementById('eggScore').textContent=`종합 점수: ${eggScore}${hasDirs?' (방향성 반영)':''}`;
   document.getElementById('eggCard').style.borderColor=col+'44';
   renderEggStrategy(stage);
 
-  // ═══ 지표 표시: Finnhub 있으면 9개(방향포함), 없으면 기존 6개
-  const fc=G._ecoCache||null;
-  const ind=egg.indicators||{};
-  let indHtml='';
-  if(fc){
-    const fmtV=(v,suf,dec)=>v!=null?v.toFixed(dec!=null?dec:1)+suf:'--';
-    const hasLead=fc.pmi!=null||fc.claims!=null||fc.hy_spread!=null;
-    const rows=[
-      ['기준금리',fmtV(fc.fed_rate,'%',2),dirArrow(fc.fed_rate_d,false)],
-      ['장단기스프레드',fmtV(fc.spread,'%',2),dirArrow(fc.spread_d,true)],
-      ['VIX',fmtV(fc.vix,'',1),dirArrow(fc.vix_d,false)],
-      ['실업률',fmtV(fc.unemp,'%',1),dirArrow(fc.unemp_d,false)],
-      ['CPI(YoY)',fmtV(fc.cpi_yoy,'%',1),dirArrow(fc.cpi_d,false)],
-      ['M2(YoY)',fmtV(fc.m2_yoy,'%',1),dirArrow(fc.m2_d,true)],
-    ];
-    if(hasLead){
-      if(fc.pmi!=null)rows.push(['ISM PMI',fmtV(fc.pmi,'',1),dirArrow(fc.pmi_d,true)]);
-      if(fc.claims!=null)rows.push(['신규실업(천)',(fc.claims/1000).toFixed(0)+'k',dirArrow(fc.claims_d,false)]);
-      if(fc.hy_spread!=null)rows.push(['HY스프레드',fmtV(fc.hy_spread,'%',2),dirArrow(fc.hy_spread_d,false)]);
-    }
-    const cols=rows.length>6?3:hasLead?3:2;
-    document.getElementById('eggIndicators').style.gridTemplateColumns=`repeat(${cols},1fr)`;
-    indHtml=rows.map(([l,v,arrow])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`).join('');
+  // ═══ 지표 표시 (항상 동작, API 불필요)
+  const fmtV=(v,suf,dec)=>v!=null?v.toFixed(dec!=null?dec:1)+suf:'--';
+  const indRows=[
+    ['기준금리',fmtV(ind.fed_rate,'%',2),dirArrow(dirs.fed_rate||null,false)],
+    ['장단기스프레드',fmtV(ind.spread,'%',2),dirArrow(dirs.spread||null,true)],
+    ['VIX',fmtV(ind.vix,'',1),dirArrow(dirs.vix||null,false)],
+    ['실업률',fmtV(ind.unemp,'%',1),dirArrow(dirs.unemp||null,false)],
+    ['CPI(YoY)',fmtV(ind.cpi_yoy,'%',1),dirArrow(dirs.cpi_yoy||null,false)],
+    ['M2(YoY)',fmtV(ind.m2_yoy,'%',1),dirArrow(dirs.m2_yoy||null,true)],
+  ];
+  document.getElementById('eggIndicators').style.gridTemplateColumns='repeat(3,1fr)';
+  let indHtml=indRows.map(([l,v,arrow])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}${arrow}</span></div>`).join('');
 
-    // 점수 분해 바
-    if(enhanced&&enhanced.scores){
-      const leadS=enhanced.scores.filter(s=>s.type==='lead');
-      const lagS=enhanced.scores.filter(s=>s.type!=='lead');
-      indHtml+=`<div style="grid-column:1/-1;margin-top:6px;padding:8px 10px;background:var(--surface);border-radius:8px;font-size:10px;line-height:1.8;">
-        ${leadS.length?`<div style="color:var(--yellow);font-weight:600;margin-bottom:4px;">⚡ 선행지표 점수</div>
-        ${leadS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}`:''}
-        ${lagS.length?`<div style="color:var(--muted);font-weight:600;margin:${leadS.length?'6':'0'}px 0 4px;">📊 후행/심리 지표</div>
-        ${lagS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}`:''}
-      </div>`;
-    }
-  }else{
-    document.getElementById('eggIndicators').style.gridTemplateColumns='repeat(2,1fr)';
-    indHtml=[
-      ['기준금리',ind.fed_rate!=null?ind.fed_rate.toFixed(2)+'%':'--'],
-      ['10Y-2Y스프레드',ind.spread!=null?ind.spread.toFixed(2)+'%':'--'],
-      ['VIX',ind.vix!=null?ind.vix.toFixed(1):'--'],
-      ['실업률',ind.unemp!=null?ind.unemp.toFixed(1)+'%':'--'],
-      ['CPI(YoY)',ind.cpi_yoy!=null?ind.cpi_yoy.toFixed(1)+'%':'--'],
-      ['M2(YoY)',ind.m2_yoy!=null?ind.m2_yoy.toFixed(1)+'%':'--'],
-    ].map(([l,v])=>`<div class="ind-item"><span class="ind-label">${l}</span><span class="ind-value">${v}</span></div>`).join('');
-    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:6px;">💡 방향성 화살표는 다음 접속 시 이전 데이터와 비교하여 표시됩니다</div>`;
+  // 점수 분해
+  if(enhanced&&enhanced.scores){
+    const leadS=enhanced.scores.filter(s=>s.type==='lead');
+    const lagS=enhanced.scores.filter(s=>s.type!=='lead');
+    indHtml+=`<div style="grid-column:1/-1;margin-top:6px;padding:8px 10px;background:var(--surface);border-radius:8px;font-size:10px;line-height:1.8;">
+      ${leadS.length?`<div style="color:var(--yellow);font-weight:600;margin-bottom:4px;">⚡ 선행지표 점수</div>
+      ${leadS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}`:''}
+      <div style="color:var(--muted);font-weight:600;margin:${leadS.length?'6':'0'}px 0 4px;">📊 지표별 점수</div>
+      ${lagS.map(s=>`<div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">${s.name}</span><span style="font-family:var(--mono);color:${s.score>=4?'var(--green)':s.score<=2.5?'var(--red)':'var(--text)'};">${s.score.toFixed(1)}</span></div>`).join('')}
+    </div>`;
+  }
+  if(!hasDirs){
+    indHtml+=`<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:4px;">📌 다음 접속 시 방향성 화살표(▲▼)가 표시됩니다</div>`;
   }
   document.getElementById('eggIndicators').innerHTML=indHtml;
 
@@ -797,14 +805,15 @@ function renderEggStrategy(stage){
 }
 
 // ══════════════════════════════════════════════
-// ══ 통합 엔진 (환율: 무료API / 지표: prices.json+방향성)
+// ══ 환율 자동갱신 + 스코어링 엔진
 // ══════════════════════════════════════════════
 
-// ── 환율 실시간 갱신 (무료, 키 불필요, CORS 지원)
+// ── 환율 실시간 (무료, 키 불필요)
 async function fetchLiveFx(){
   if(G._fxCache&&(Date.now()-G._fxCache._ts)<120000)return;
   try{
     const r=await fetch('https://open.er-api.com/v6/latest/USD');
+    if(!r.ok)return;
     const j=await r.json();
     if(j&&j.rates&&j.rates.KRW){
       const rate=j.rates.KRW;
@@ -815,68 +824,6 @@ async function fetchLiveFx(){
       renderHome();renderHoldings();
     }
   }catch(e){console.warn('FX 조회 실패',e);}
-}
-
-// ── 경제지표 보강 (prices.json 기본 + VIX 실시간 + 방향성 추적)
-async function fetchEnhancedEgg(){
-  if(G._ecoCache&&(Date.now()-G._ecoCache._ts)<300000)return;
-
-  const egg=(G.data&&G.data.egg)||{};
-  const ind=egg.indicators||{};
-  if(!ind.fed_rate&&!ind.vix)return;
-
-  // 현재 값
-  const now=new Date().toISOString().slice(0,10);
-  const cur={
-    fed_rate:ind.fed_rate,spread:ind.spread,vix:ind.vix,
-    unemp:ind.unemp,cpi_yoy:ind.cpi_yoy,m2_yoy:ind.m2_yoy,
-    _date:now
-  };
-
-  // VIX 실시간 시도 (Finnhub quote, 무료 가능)
-  const apiKey=G.settings.cfgFinnhub||'';
-  if(apiKey){
-    try{
-      const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=VIX&token=${apiKey}`);
-      const q=await r.json();
-      if(q&&q.c>0)cur.vix=q.c;
-    }catch(e){}
-  }
-
-  // 방향성 계산 (이전 저장값 대비)
-  const prev=JSON.parse(localStorage.getItem('egg_history')||'{}');
-  const prevDate=prev._date||'';
-  const daysDiff=prevDate?(Math.floor((new Date(now)-new Date(prevDate))/(864e5))):999;
-  const dirs={};
-  if(prev._date){
-    ['fed_rate','spread','vix','unemp','cpi_yoy','m2_yoy'].forEach(k=>{
-      if(cur[k]!=null&&prev[k]!=null){
-        dirs[k]=cur[k]-prev[k];
-      }
-    });
-  }
-
-  // 최소 1일 간격으로 히스토리 갱신
-  if(daysDiff>=1||!prev._date){
-    localStorage.setItem('egg_history',JSON.stringify(cur));
-  }
-
-  G._ecoCache={
-    fed_rate:cur.fed_rate, fed_rate_d:dirs.fed_rate!=null?dirs.fed_rate:null,
-    spread:cur.spread, spread_d:dirs.spread!=null?dirs.spread:null,
-    vix:cur.vix, vix_d:dirs.vix!=null?dirs.vix:null,
-    unemp:cur.unemp, unemp_d:dirs.unemp!=null?dirs.unemp:null,
-    cpi_yoy:cur.cpi_yoy, cpi_d:dirs.cpi_yoy!=null?dirs.cpi_yoy:null,
-    m2_yoy:cur.m2_yoy, m2_d:dirs.m2_yoy!=null?dirs.m2_yoy:null,
-    pmi:null, pmi_d:null,
-    claims:null, claims_d:null,
-    hy_spread:null, hy_spread_d:null,
-    _ts:Date.now()
-  };
-
-  const enhanced=calculateEnhancedStage(G._ecoCache);
-  G._enhancedEgg=enhanced;
-  renderHome();
 }
 
 // ═══ 방향성 + 절대수준 기반 종합 스코어링
