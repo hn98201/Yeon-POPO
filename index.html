@@ -442,30 +442,30 @@ body {
       <div class="card-title">GitHub 연동</div>
       <div class="setting-row">
         <span class="setting-label">GitHub 토큰 (PAT)</span>
-        <input type="password" class="setting-input" id="ghToken" placeholder="ghp_..." onchange="saveSetting()">
+        <input type="password" class="setting-input" id="ghToken" placeholder="ghp_..." oninput="saveSetting()">
       </div>
       <div class="setting-row">
         <span class="setting-label">저장소 (user/repo)</span>
-        <input type="text" class="setting-input" id="ghRepo" placeholder="user/repo" onchange="saveSetting()">
+        <input type="text" class="setting-input" id="ghRepo" placeholder="user/repo" oninput="saveSetting()">
       </div>
       <div class="setting-row">
         <span class="setting-label">파일 경로</span>
-        <input type="text" class="setting-input" id="ghFile" placeholder="portfolio.json" onchange="saveSetting()">
+        <input type="text" class="setting-input" id="ghFile" placeholder="portfolio.json" oninput="saveSetting()">
       </div>
     </div>
     <div class="card">
       <div class="card-title">투자 설정</div>
       <div class="setting-row">
         <span class="setting-label">월 투자금</span>
-        <input type="number" class="setting-input" id="cfgMonthly" placeholder="800000" onchange="saveSetting()">
+        <input type="number" class="setting-input" id="cfgMonthly" placeholder="800000" oninput="saveSetting()">
       </div>
       <div class="setting-row">
         <span class="setting-label">비교 시작일</span>
-        <input type="date" class="setting-input" id="cfgStart" onchange="saveSetting()">
+        <input type="date" class="setting-input" id="cfgStart" oninput="saveSetting()">
       </div>
       <div class="setting-row">
         <span class="setting-label">WR 임계값</span>
-        <input type="number" class="setting-input" id="cfgWrThr" placeholder="-60" onchange="saveSetting()">
+        <input type="number" class="setting-input" id="cfgWrThr" placeholder="-60" oninput="saveSetting()">
       </div>
     </div>
     <div class="card">
