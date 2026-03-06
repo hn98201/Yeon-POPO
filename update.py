@@ -167,6 +167,39 @@ def get_economic_indicators() -> dict:
     except:
         ind['m2_yoy'] = None
 
+    # ═══ 선행지표 3종 ═══
+
+    # ISM 제조업 PMI (FRED: NAPM)
+    try:
+        r = requests.get(
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=NAPM',
+            timeout=10)
+        lines = r.text.strip().split('\n')
+        ind['pmi'] = float(lines[-1].split(',')[1])
+    except:
+        ind['pmi'] = None
+
+    # 신규 실업수당 청구건수 (FRED: ICSA)
+    try:
+        r = requests.get(
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=ICSA',
+            timeout=10)
+        lines = r.text.strip().split('\n')
+        ind['claims'] = float(lines[-1].split(',')[1])
+    except:
+        ind['claims'] = None
+
+    # 하이일드 스프레드 (FRED: BAMLH0A0HYM2)
+    try:
+        r = requests.get(
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2',
+            timeout=10)
+        lines = r.text.strip().split('\n')
+        val = lines[-1].split(',')[1]
+        ind['hy_spread'] = float(val) if val != '.' else None
+    except:
+        ind['hy_spread'] = None
+
     return ind
 
 def calc_egg_stage(ind: dict) -> dict:
@@ -221,13 +254,41 @@ def calc_egg_stage(ind: dict) -> dict:
         elif m2 > 0:  score += 0
         else:         score -= 1; reasons.append('유동성 축소')
 
+    # ═══ 선행지표 3종 (경기 선행 → 가중치 높게) ═══
+    pmi    = ind.get('pmi')
+    claims = ind.get('claims')
+    hy     = ind.get('hy_spread')
+
+    # ISM PMI: 50 이상 확장, 이하 수축
+    if pmi is not None:
+        if pmi >= 55:   score += 3; reasons.append('제조업 강확장')
+        elif pmi >= 50: score += 1; reasons.append('제조업 확장')
+        elif pmi >= 45: score -= 1; reasons.append('제조업 수축')
+        else:           score -= 3; reasons.append('제조업 급수축')
+
+    # 신규실업수당: 낮을수록 건강
+    if claims is not None:
+        ck = claims / 1000
+        if ck < 220:    score += 2; reasons.append('고용 견조')
+        elif ck < 260:  score += 1; reasons.append('고용 양호')
+        elif ck < 300:  score -= 1; reasons.append('고용 둔화')
+        else:           score -= 2; reasons.append('고용 악화')
+
+    # HY 스프레드: 높을수록 신용 위축
+    if hy is not None:
+        if hy < 3.0:    score += 2; reasons.append('신용 안정')
+        elif hy < 4.0:  score += 1; reasons.append('신용 양호')
+        elif hy < 5.0:  score -= 1; reasons.append('신용 경계')
+        else:           score -= 2; reasons.append('신용 위축')
+
+  
     # 단계 결정 (1~6)
-    if   score >= 6:  stage, desc = 4, '상승 본격화 — 기술/헬스케어 중심'
-    elif score >= 3:  stage, desc = 3, '상승 초입 — 금융/산업재 선호'
-    elif score >= 0:  stage, desc = 2, '바닥 형성 — 산업재/소재 관심'
-    elif score >= -3: stage, desc = 5, '고점 후 하락 — 헬스케어/경기소비재'
-    elif score >= -5: stage, desc = 6, '하락기 — 필수소비재/유틸리티 방어'
-    else:             stage, desc = 1, '위기 — 에너지/소재 역발상'
+    if   score >= 10: stage, desc = 4, '④ 상승 본격 — 기술/헬스케어 중심'
+    elif score >= 5:  stage, desc = 3, '③ 상승 초입 — 금융/산업재 선호'
+    elif score >= 0:  stage, desc = 2, '② 바닥 형성 — 산업재/소재 관심'
+    elif score >= -5: stage, desc = 5, '⑤ 과열 후 하락 — 헬스케어/경기소비재'
+    elif score >= -9: stage, desc = 6, '⑥ 하락기 — 필수소비재/유틸리티 방어'
+    else:             stage, desc = 1, '① 위기 — 에너지/소재 역발상'
 
     return {'stage': stage, 'desc': desc, 'score': score, 'indicators': ind, 'reasons': reasons}
 
