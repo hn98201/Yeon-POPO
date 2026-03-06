@@ -1,0 +1,35 @@
+name: 📊 포트폴리오 자동 업데이트
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5'
+    - cron: '0 14 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+      - name: 🐍 Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 📦 패키지 설치
+        run: pip install requests pandas numpy yfinance
+      - name: 🚀 포트폴리오 업데이트 실행
+        env:
+          FINNHUB_KEY:        ${{ secrets.FINNHUB_KEY }}
+          TELEGRAM_TOKEN:     ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python update.py
+      - name: 💾 결과 커밋 & 푸시
+        run: |
+          git config user.name  "Portfolio Bot"
+          git config user.email "bot@portfolio.local"
+          git add prices.json
+          git diff --cached --quiet || git commit -m "📊 자동 업데이트: $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
+          git push
