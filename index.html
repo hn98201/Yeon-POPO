@@ -536,17 +536,13 @@ function renderHome(){
   if(!d)return;
   document.getElementById('home-loading').style.display='none';
   document.getElementById('home-content').style.display='block';
-  const s=d.portfolio_summary||{};
   const allH=mergedHoldings();
-  const pendingVal=allH.filter(h=>h._pending).reduce((a,h)=>a+(h.current_value_krw||0),0);
-  const val=(s.total_value_krw||0)+pendingVal;
-  const pnl=s.total_pnl_pct||0;
+  const val=allH.reduce((a,h)=>a+(h.current_value_krw||0),0);
+  const fx=d.fx_rate||1350;
+  const valUsd=val>0?(val/fx):0;
   document.getElementById('totalKrw').textContent=val?val.toLocaleString('ko-KR')+'원':'--';
-  document.getElementById('totalUsd').textContent=s.total_value_usd?`$${s.total_value_usd.toLocaleString()}`:'--';
+  document.getElementById('totalUsd').textContent=valUsd>0?`$${Math.round(valUsd).toLocaleString()}`:'--';
   document.getElementById('fxRate').textContent=d.fx_rate?`₩${d.fx_rate.toLocaleString()}`:'--';
-  const b=document.getElementById('totalPnlBadge');
-  b.textContent=`${pnl>=0?'+':''}${pnl.toFixed(2)}%`;b.className='pnl-badge '+(pnl>=0?'pos':'neg');
-
   const monthly=parseInt(G.settings.cfgMonthly||800000);
   const startDate=G.settings.cfgStart||'';
   const months=monthsAllocated(startDate);
@@ -561,7 +557,11 @@ function renderHome(){
   const divs=dividendData();
   const totalDiv=divs.reduce((a,t)=>a+(t.div_krw||0),0);
   const ret=totalInv>0?(((val+totalDiv)-totalInv)/totalInv*100).toFixed(2):'0.00';
-  const holdingsCount=mergedHoldings().length;
+  const retNum=parseFloat(ret);
+  const holdingsCount=allH.length;
+
+  const b=document.getElementById('totalPnlBadge');
+  b.textContent=`${retNum>=0?'+':''}${ret}%`;b.className='pnl-badge '+(retNum>=0?'pos':'neg');
 
   document.getElementById('investSummary').innerHTML=[
     ['💰 누적 배정금 ('+months+'개월)',totalBudget>0?Math.round(totalBudget).toLocaleString()+'원':'시작일 설정 필요','color:var(--blue)'],
