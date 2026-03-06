@@ -34,6 +34,13 @@
       "avg_price_usd": 145.27,
       "sector": "산업재",
       "start_date": "2026-03-06"
+    },
+    {
+      "ticker": "AFL",
+      "shares": 0.0544,
+      "avg_price_usd": 109.85,
+      "sector": "금융",
+      "start_date": "2026-03-06"
     }
   ],
   "transactions": [
@@ -72,6 +79,15 @@
       "price_usd": 145.27,
       "fx": 1487,
       "note": "신호매수 약매수"
+    },
+    {
+      "date": "2026-03-06",
+      "type": "buy",
+      "ticker": "AFL",
+      "shares": 0.0544,
+      "price_usd": 109.85,
+      "fx": 1487,
+      "note": "신호매수 약매수"
     }
   ],
   "extra_deposits": [],
@@ -89,6 +105,10 @@
       "updated": "2026-03-06"
     },
     "EXPD": {
+      "done": 1,
+      "updated": "2026-03-06"
+    },
+    "AFL": {
       "done": 1,
       "updated": "2026-03-06"
     }
