@@ -179,10 +179,10 @@ def get_economic_indicators() -> dict:
 
     # ═══ 선행지표 3종 ═══
 
-    # ISM 제조업 PMI (FRED: MANEMP → 제조업 고용지수, PMI 대용)
+    # 소비자심리지수 (FRED: UMCSENT — 미시간대, 선행지표)
     try:
         r = requests.get(
-            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=MNFCTRSMSA',
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=UMCSENT',
             timeout=10)
         lines = r.text.strip().split('\n')
         val = lines[-1].split(',')[1]
@@ -270,12 +270,12 @@ def calc_egg_stage(ind: dict) -> dict:
     claims = ind.get('claims')
     hy     = ind.get('hy_spread')
 
-    # ISM PMI: 50 이상 확장, 이하 수축
+    # 소비자심리: 80 이상 낙관, 60 이하 비관
     if pmi is not None:
-        if pmi >= 55:   score += 3; reasons.append('제조업 강확장')
-        elif pmi >= 50: score += 1; reasons.append('제조업 확장')
-        elif pmi >= 45: score -= 1; reasons.append('제조업 수축')
-        else:           score -= 3; reasons.append('제조업 급수축')
+        if pmi >= 85:   score += 3; reasons.append('소비심리 강낙관')
+        elif pmi >= 70: score += 1; reasons.append('소비심리 양호')
+        elif pmi >= 60: score -= 1; reasons.append('소비심리 위축')
+        else:           score -= 3; reasons.append('소비심리 급냉')
 
     # 신규실업수당: 낮을수록 건강
     if claims is not None:
