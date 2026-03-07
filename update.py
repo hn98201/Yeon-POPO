@@ -126,10 +126,20 @@ def get_economic_indicators() -> dict:
     except:
         ind['spread'] = None
 
-    # VIX (Finnhub)
+    # VIX (FRED)
     try:
-        q = client.quote('^VIX')
-        ind['vix'] = round(q.get('c', 0), 1)
+        r = requests.get(
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS',
+            timeout=10)
+        lines = r.text.strip().split('\n')
+        # 최신 값이 '.'일 수 있으므로 역순으로 유효값 탐색
+        for line in reversed(lines[1:]):
+            val = line.split(',')[1]
+            if val != '.':
+                ind['vix'] = round(float(val), 1)
+                break
+        else:
+            ind['vix'] = None
     except:
         ind['vix'] = None
 
@@ -169,13 +179,14 @@ def get_economic_indicators() -> dict:
 
     # ═══ 선행지표 3종 ═══
 
-    # ISM 제조업 PMI (FRED: NAPM)
+    # ISM 제조업 PMI (FRED: MANEMP → 제조업 고용지수, PMI 대용)
     try:
         r = requests.get(
-            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=NAPM',
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=MANEMP',
             timeout=10)
         lines = r.text.strip().split('\n')
-        ind['pmi'] = float(lines[-1].split(',')[1])
+        val = lines[-1].split(',')[1]
+        ind['pmi'] = float(val) if val != '.' else None
     except:
         ind['pmi'] = None
 
