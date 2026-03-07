@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-03-07 09:35 KST",
+  "updated_at": "2026-03-07 09:41 KST",
   "fx_rate": 1484.0,
   "egg": {
-    "stage": 3,
-    "desc": "③ 상승 초입 — 금융/산업재 선호",
-    "score": 8,
+    "stage": 2,
+    "desc": "② 바닥 형성 — 산업재/소재 관심",
+    "score": 2,
     "indicators": {
       "fed_rate": 3.64,
       "spread": 0.59,
@@ -12,7 +12,7 @@
       "unemp": 4.4,
       "cpi_yoy": 2.4,
       "m2_yoy": 4.3,
-      "pmi": 609157.0,
+      "pmi": 56.4,
       "claims": 213000.0,
       "hy_spread": 3.0
     },
@@ -20,19 +20,12 @@
       "저금리",
       "정상 수익률 곡선",
       "고변동성",
-      "제조업 강확장",
+      "소비심리 급냉",
       "고용 견조",
       "신용 양호"
     ]
   },
   "current_30": [
-    "CB",
-    "CINF",
-    "AFL",
-    "BEN",
-    "SPGI",
-    "AMP",
-    "AON",
     "CAT",
     "EMR",
     "ITW",
@@ -45,6 +38,13 @@
     "ROL",
     "FAST",
     "NDSN",
+    "CB",
+    "CINF",
+    "AFL",
+    "BEN",
+    "SPGI",
+    "AMP",
+    "AON",
     "IBM",
     "TXN",
     "KO",
