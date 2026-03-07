@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-07 09:28 KST",
+  "updated_at": "2026-03-07 09:35 KST",
   "fx_rate": 1484.0,
   "egg": {
     "stage": 3,
@@ -12,7 +12,7 @@
       "unemp": 4.4,
       "cpi_yoy": 2.4,
       "m2_yoy": 4.3,
-      "pmi": 12573.0,
+      "pmi": 609157.0,
       "claims": 213000.0,
       "hy_spread": 3.0
     },
