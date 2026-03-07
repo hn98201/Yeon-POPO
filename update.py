@@ -182,7 +182,7 @@ def get_economic_indicators() -> dict:
     # ISM 제조업 PMI (FRED: MANEMP → 제조업 고용지수, PMI 대용)
     try:
         r = requests.get(
-            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=MANEMP',
+            'https://fred.stlouisfed.org/graph/fredgraph.csv?id=MNFCTRSMSA',
             timeout=10)
         lines = r.text.strip().split('\n')
         val = lines[-1].split(',')[1]
