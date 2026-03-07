@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: 📦 패키지 설치
-        run: pip install requests pandas numpy yfinance
+        run: pip install requests pandas numpy yfinance finnhub-python
       - name: 🚀 포트폴리오 업데이트 실행
         env:
           FINNHUB_KEY:        ${{ secrets.FINNHUB_KEY }}
