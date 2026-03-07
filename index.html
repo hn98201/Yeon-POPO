@@ -874,10 +874,10 @@ function calculateEnhancedStage(ind){
     scores.push({name:'M2유동성',score:clamp(lv+dr),weight:0.8,type:'lag'});
   }
   if(ind.pmi!=null){
-    let lv=ind.pmi<=42?1.5:ind.pmi<=46?2:ind.pmi<=49?2.5:ind.pmi<=51?3.5:ind.pmi<=55?4:ind.pmi<=58?5:5.5;
+    let lv=ind.pmi<=55?1.5:ind.pmi<=60?2:ind.pmi<=65?2.5:ind.pmi<=70?3.5:ind.pmi<=80?4:ind.pmi<=85?5:5.5;
     let dr=0;
-    if(ind.pmi_d!=null){dr=ind.pmi_d>2?0.8:ind.pmi_d>0?0.3:ind.pmi_d<-2?-0.8:ind.pmi_d<0?-0.3:0;}
-    scores.push({name:'ISM PMI',score:clamp(lv+dr),weight:1.5,type:'lead'});
+    if(ind.pmi_d!=null){dr=ind.pmi_d>5?0.8:ind.pmi_d>0?0.3:ind.pmi_d<-5?-0.8:ind.pmi_d<0?-0.3:0;}
+    scores.push({name:'소비자심리',score:clamp(lv+dr),weight:1.5,type:'lead'});
   }
   if(ind.claims!=null){
     const ck=ind.claims/1000;
