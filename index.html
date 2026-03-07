@@ -652,7 +652,7 @@ function renderHome(){
     ['CPI(YoY)',fmtV(ind.cpi_yoy,'%',1),dirArrow(dirs.cpi_yoy||null,false)],
     ['M2(YoY)',fmtV(ind.m2_yoy,'%',1),dirArrow(dirs.m2_yoy||null,true)],
   ];
-  if(ind.pmi!=null)indRows.push(['ISM PMI',fmtV(ind.pmi,'',1),dirArrow(dirs.pmi||null,true)]);
+  if(ind.pmi!=null)indRows.push(['소비자심리',fmtV(ind.pmi,'',1),dirArrow(dirs.pmi||null,true)]);
   if(ind.claims!=null)indRows.push(['신규실업(천)',(ind.claims/1000).toFixed(0)+'k',dirArrow(dirs.claims||null,false)]);
   if(ind.hy_spread!=null)indRows.push(['HY스프레드',fmtV(ind.hy_spread,'%',2),dirArrow(dirs.hy_spread||null,false)]);
   document.getElementById('eggIndicators').style.gridTemplateColumns=`repeat(3,1fr)`;
