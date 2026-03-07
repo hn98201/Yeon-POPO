@@ -421,6 +421,38 @@ function investedByTicker(){
   return m;
 }
 
+// ══ 섹터가중 배정 시스템
+function getSectorWeight(ticker,stage){
+  const sector=NOBL_UNIVERSE[ticker]||'--';
+  const strat=STAGE_STRATEGY[stage];
+  if(!strat)return 1.0;
+  const pref=strat.sectors;
+  if(sector===pref[0])return 1.5;
+  if(pref.includes(sector))return 1.2;
+  return 0.7;
+}
+
+function calcWeightedAlloc(monthly,stage,current30){
+  if(!current30||!current30.length)return{};
+  let totalRaw=0;
+  const raw={};
+  current30.forEach(t=>{
+    const w=getSectorWeight(t,stage);
+    raw[t]=w;
+    totalRaw+=w;
+  });
+  const norm=current30.length/totalRaw;
+  const base=monthly/current30.length;
+  const allocs={};
+  current30.forEach(t=>{allocs[t]=Math.round(base*raw[t]*norm);});
+  return allocs;
+}
+
+function getWeightedPerStock(ticker,monthly,stage,current30){
+  const allocs=calcWeightedAlloc(monthly,stage,current30);
+  return allocs[ticker]||(monthly/30);
+}
+
 function dividendData(){
   return((G.portfolio&&G.portfolio.transactions)||[]).filter(t=>t.type==='dividend');
 }
@@ -592,7 +624,7 @@ function renderHome(){
     const n12=nextAllocDate(startDate);
     const days=Math.ceil((n12-new Date())/(864e5));
     document.getElementById('allocNotice').innerHTML=`<div class="alloc-notice">
-      📅 다음 투자일 D-${days} (${n12.toLocaleDateString('ko-KR')}) — 종목당 <strong>${Math.round(perStock).toLocaleString()}원</strong>
+      📅 다음 투자일 D-${days} (${n12.toLocaleDateString('ko-KR')}) — 종목당 <strong>${Math.round(perStock).toLocaleString()}원</strong> (평균)
     </div>`;
   }
 
@@ -627,6 +659,8 @@ function renderHome(){
   };
   const enhanced=calculateEnhancedStage(ecoData);
   const stage=enhanced?enhanced.stage:(egg.stage||3);
+  G._currentStage=stage;
+  G._current30=(d.current_30||[]);
   const eggScore=enhanced?enhanced.score:(egg.score||'--');
   const eggDesc=enhanced?enhanced.desc:(egg.desc||'--');
   const hasDirs=Object.keys(dirs).length>0;
@@ -921,7 +955,8 @@ function renderHoldings(){
   const monthly=parseInt(G.settings.cfgMonthly||800000);
   const startDate=G.settings.cfgStart||'';
   const months=monthsAllocated(startDate);
-  const perStock=monthly/30;
+  const stage=G._currentStage||3;
+  const c30=G._current30||[];
   const invMap=investedByTicker();
 
   el.innerHTML=h.map(h=>{
@@ -934,15 +969,18 @@ function renderHoldings(){
         ?'<span style="font-size:9px;color:var(--yellow);margin-left:6px;border:1px solid var(--yellow);border-radius:4px;padding:1px 5px;">시세 조회중…</span>'
         :'<span style="font-size:9px;color:var(--muted);margin-left:6px;border:1px solid var(--border);border-radius:4px;padding:1px 5px;">시세 대기</span>')
       :'';
-    const alloc=perStock*months;
+    const wps=getWeightedPerStock(h.ticker,monthly,stage,c30);
+    const sw=getSectorWeight(h.ticker,stage);
+    const alloc=wps*months;
     const inv=invMap[h.ticker]||0;
     const surplus=Math.max(0,alloc-inv);
     const progPct=alloc>0?Math.min(100,inv/alloc*100):0;
     const isDone=surplus<=0;
+    const weightTag=sw>=1.5?'<span style="font-size:8px;color:var(--green);margin-left:4px;">▲1.5x</span>':sw>=1.2?'<span style="font-size:8px;color:var(--blue);margin-left:4px;">▲1.2x</span>':sw<1?'<span style="font-size:8px;color:var(--muted);margin-left:4px;">▽0.7x</span>':'';
 
     return`<div class="holding-row" style="flex-wrap:wrap;">
       <div class="holding-left">
-        <div class="holding-ticker">${h.ticker}${pendingTag}</div>
+        <div class="holding-ticker">${h.ticker}${weightTag}${pendingTag}</div>
         <div class="holding-meta">${h.sector||'--'} · ${(h.shares||0).toFixed(4)}주 · WR <span style="color:${wc};font-family:var(--mono);">${wr}</span></div>
       </div>
       <div class="holding-right">
@@ -970,7 +1008,9 @@ function renderSignals(){
   const monthly=parseInt(G.settings.cfgMonthly||800000);
   const startDate=G.settings.cfgStart||'';
   const months=monthsAllocated(startDate);
-  const perStock=monthly/30;
+  const stage=G._currentStage||3;
+  const c30=G._current30||[];
+  const basePerStock=monthly/30;
   const invMap=investedByTicker();
   const stages=getStages();
   cleanStages(sigs.map(s=>s.ticker));
@@ -978,10 +1018,10 @@ function renderSignals(){
   document.getElementById('monthlyAllocCard').innerHTML=months>0?`
     <div class="card" style="border-color:rgba(37,99,235,.4);margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div><div style="font-size:11px;color:var(--muted);">누적 배정 (${months}개월 × 12일 기준)</div>
-          <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--blue);">${Math.round(perStock*months).toLocaleString()}원/종목</div></div>
-        <div style="text-align:right;"><div style="font-size:11px;color:var(--muted);">월 종목당</div>
-          <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--accent);">${Math.round(perStock).toLocaleString()}원</div></div>
+        <div><div style="font-size:11px;color:var(--muted);">누적 배정 (${months}개월 × 섹터가중)</div>
+          <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--blue);">${Math.round(basePerStock*months).toLocaleString()}원/종목 (평균)</div></div>
+        <div style="text-align:right;"><div style="font-size:11px;color:var(--muted);">추천섹터 ×1.5</div>
+          <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--green);">${Math.round(basePerStock*1.5).toLocaleString()}원</div></div>
       </div>
     </div>`:'<div class="card" style="margin-bottom:12px;"><div style="color:var(--muted);font-size:13px;">⚠️ 투자 시작일을 설정하세요 (설정 탭)</div></div>';
 
@@ -994,13 +1034,15 @@ function renderSignals(){
       const stg=stages[s.ticker]||{done:0};
       const curLv=wrToLevel(s.wr);
       const doneLv=stg.done||0;
-      const alloc=perStock*months;
+      const wps=getWeightedPerStock(s.ticker,monthly,stage,c30);
+      const sw=getSectorWeight(s.ticker,stage);
+      const alloc=wps*months;
       const inv=invMap[s.ticker]||0;
       const surplus=Math.max(0,alloc-inv);
       const cls=curLv>=3?'strong':curLv>=2?'mid':'weak';
       const lvTxt=curLv>=3?'강매수':curLv>=2?'중매수':'약매수';
       const stgTxt=doneLv>0?`(${doneLv}/3단계 완료)`:'';
-
+      const wtLabel=sw>=1.5?'⬆1.5x':sw>=1.2?'↑1.2x':'0.7x';
       if(doneLv>=curLv)return`<div class="holding-row standby-row">
         <div class="holding-left">
           <div class="holding-ticker">${s.ticker}</div>
@@ -1014,7 +1056,7 @@ function renderSignals(){
 
       const newR=levelToRatio(curLv);
       const doneR=doneLv>0?levelToRatio(doneLv):0;
-      const rawBuy=Math.round(perStock*(newR-doneR)/100)*100;
+      const rawBuy=Math.round(wps*(newR-doneR)/100)*100;
       const buyKrw=surplus>0?Math.min(surplus,rawBuy):0;
       const fx=G.data.fx_rate||1350;
       const shares=s.price>0&&buyKrw>0?Math.floor(buyKrw/fx/s.price*10000)/10000:'--';
@@ -1025,9 +1067,9 @@ function renderSignals(){
         <div class="holding-left" style="display:flex;align-items:flex-start;gap:10px;">
           <div style="width:16px;"></div>
           <div style="flex:1;">
-            <div class="holding-ticker">${s.ticker}</div>
+            <div class="holding-ticker">${s.ticker} <span style="font-size:9px;color:${sw>=1.2?'var(--green)':'var(--muted)'};font-weight:600;">${wtLabel}</span></div>
             <div class="holding-meta">${s.sector||'--'} · $${(s.price||0).toFixed(2)} ${stgTxt}</div>
-            <div style="font-size:11px;margin-top:3px;">잉여: <span style="color:${surplus>0?'var(--yellow)':'var(--red)'};font-family:var(--mono);">${Math.round(surplus).toLocaleString()}원</span></div>
+            <div style="font-size:11px;margin-top:3px;">잉여: <span style="color:${surplus>0?'var(--yellow)':'var(--red)'};font-family:var(--mono);">${Math.round(surplus).toLocaleString()}원</span> (배정 ${Math.round(alloc).toLocaleString()}원)</div>
             ${!noSurplus
               ?`<div style="font-size:12px;font-family:var(--mono);color:var(--yellow);margin-top:2px;">≈ ${buyKrw.toLocaleString()}원 (${shares}주 / $${buyUsd})</div>`
               :`<div style="font-size:11px;color:var(--red);margin-top:2px;">⚠️ 잉여현금 없음 — PASS 처리하세요</div>`}
@@ -1045,7 +1087,6 @@ function renderSignals(){
     }).join('');
   }
 
-  const c30=(G.data&&G.data.current_30)||[];
   document.getElementById('current30List').innerHTML=c30.map(t=>{
     const has=sigs.some(s=>s.ticker===t);
     return`<span style="padding:4px 10px;border-radius:8px;font-size:11px;font-family:var(--mono);
@@ -1060,17 +1101,22 @@ function renderSignals(){
     return;
   }
   const items=c30.map(ticker=>{
-    const alloc=perStock*months;
+    const wps=getWeightedPerStock(ticker,monthly,stage,c30);
+    const sw=getSectorWeight(ticker,stage);
+    const alloc=wps*months;
     const inv=invMap[ticker]||0;
     const surplus=Math.max(0,alloc-inv);
     const pct=alloc>0?Math.min(100,inv/alloc*100):0;
-    return{ticker,alloc,inv,surplus,pct};
+    return{ticker,alloc,inv,surplus,pct,sw};
   }).sort((a,b)=>b.surplus-a.surplus);
 
-  surplusEl.innerHTML=items.map(item=>`
+  surplusEl.innerHTML=items.map(item=>{
+    const wtC=item.sw>=1.5?'var(--green)':item.sw>=1.2?'var(--blue)':'var(--muted)';
+    const wtT=item.sw>=1.5?'×1.5':item.sw>=1.2?'×1.2':'×0.7';
+    return`
     <div class="holding-row">
       <div class="holding-left">
-        <div class="holding-ticker">${item.ticker}</div>
+        <div class="holding-ticker">${item.ticker} <span style="font-size:9px;color:${wtC};font-weight:600;">${wtT}</span></div>
         <div class="holding-meta">배정 ${Math.round(item.alloc).toLocaleString()}원 · 투자 ${Math.round(item.inv).toLocaleString()}원</div>
         <div class="prog-bar"><div class="prog-fill" style="width:${item.pct.toFixed(0)}%;background:${item.surplus>0?'var(--accent)':'var(--green)'};"></div></div>
       </div>
@@ -1078,7 +1124,7 @@ function renderSignals(){
         <div style="font-size:13px;font-weight:700;color:${item.surplus>0?'var(--yellow)':'var(--green)'};font-family:var(--mono);">${item.surplus>0?Math.round(item.surplus).toLocaleString()+'원':'✅ 완투'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.pct.toFixed(0)}% 투자됨</div>
       </div>
-    </div>`).join('');
+    </div>`}).join('');
 }
 
 // ✅ 변경2: applySignal — 매수는 팝업, PASS는 바로처리
@@ -1104,20 +1150,24 @@ function openBuyModal(ticker, level){
   G._modalLevel=level;
   const monthly=parseInt(G.settings.cfgMonthly||800000);
   const months=monthsAllocated(G.settings.cfgStart||'');
-  const perStock=monthly/30;
+  const stage=G._currentStage||3;
+  const c30=G._current30||[];
+  const wps=getWeightedPerStock(ticker,monthly,stage,c30);
+  const sw=getSectorWeight(ticker,stage);
   const invMap=investedByTicker();
-  const surplus=Math.max(0,perStock*months-(invMap[ticker]||0));
+  const surplus=Math.max(0,wps*months-(invMap[ticker]||0));
   const stages=getStages();
   const doneLv=(stages[ticker]||{}).done||0;
   const newR=levelToRatio(level);
   const doneR=doneLv>0?levelToRatio(doneLv):0;
-  const buyKrw=Math.min(surplus,Math.round(perStock*(newR-doneR)/100)*100);
+  const buyKrw=Math.min(surplus,Math.round(wps*(newR-doneR)/100)*100);
   const lvTxt=level>=3?'강매수':level>=2?'중매수':'약매수';
   const sig=(G.data.active_signals||[]).find(s=>s.ticker===ticker)||{};
   G._modalBuyKrw=buyKrw;
   G._modalSurplus=surplus;
-  document.getElementById('modalTitle').textContent=`${ticker} 매수 확정`;
-  document.getElementById('modalSubtitle').textContent=`${lvTxt} | WR ${(sig.wr||0).toFixed(1)} | 잉여현금 ${Math.round(surplus).toLocaleString()}원`;
+  const wtLabel=sw>=1.5?'×1.5':sw>=1.2?'×1.2':'×0.7';
+  document.getElementById('modalTitle').textContent=`${ticker} 매수 확정 (${wtLabel})`;
+  document.getElementById('modalSubtitle').textContent=`${lvTxt} | WR ${(sig.wr||0).toFixed(1)} | 잉여 ${Math.round(surplus).toLocaleString()}원 | 배정 ${Math.round(wps).toLocaleString()}원/월`;
   document.getElementById('modalPrice').value=sig.price||'';
   document.getElementById('modalFx').value=G.data.fx_rate||1350;
   updateModalSummary();
