@@ -332,6 +332,10 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <div class="card">
     <div class="card-title">투자 설정 (매월 12일 자동 배정)</div>
     <div class="setting-row">
+      <span class="setting-label">초기투자금</span>
+      <input type="number" class="setting-input" id="cfgInitial" placeholder="0" oninput="saveSetting()">
+    </div>
+    <div class="setting-row">
       <span class="setting-label">월 투자금</span>
       <input type="number" class="setting-input" id="cfgMonthly" placeholder="800000" oninput="saveSetting()">
     </div>
@@ -451,6 +455,31 @@ function calcWeightedAlloc(monthly,stage,current30){
 function getWeightedPerStock(ticker,monthly,stage,current30){
   const allocs=calcWeightedAlloc(monthly,stage,current30);
   return allocs[ticker]||(monthly/30);
+}
+
+// ══ 종목별 총 배정금 (초기투자금 + 월적립 × 개월 + 추가입금, 전부 가중)
+function getTotalAllocPerTicker(ticker){
+  const monthly=parseInt(G.settings.cfgMonthly||800000);
+  const initial=parseInt(G.settings.cfgInitial||0);
+  const startDate=G.settings.cfgStart||'';
+  const months=monthsAllocated(startDate);
+  const stage=G._currentStage||3;
+  const c30=G._current30||[];
+  const extraDeps=(G.portfolio&&G.portfolio.extra_deposits)||[];
+  const extraTotal=extraDeps.reduce((a,d)=>a+(d.amount_krw||0),0);
+
+  // 가중치 비율 계산
+  const allocs=calcWeightedAlloc(1,stage,c30);
+  const myRatio=allocs[ticker]||(1/30);
+
+  // 초기투자금 가중 배분
+  const initialAlloc=initial*myRatio;
+  // 월적립 가중 배분 × 개월
+  const monthlyAlloc=monthly*myRatio*months;
+  // 추가입금 가중 배분
+  const extraAlloc=extraTotal*myRatio;
+
+  return Math.round(initialAlloc+monthlyAlloc+extraAlloc);
 }
 
 function dividendData(){
@@ -592,13 +621,14 @@ function renderHome(){
   document.getElementById('totalUsd').textContent=valUsd>0?`$${Math.round(valUsd).toLocaleString()}`:'--';
   document.getElementById('fxRate').textContent=d.fx_rate?`₩${d.fx_rate.toLocaleString()}`:'--';
   const monthly=parseInt(G.settings.cfgMonthly||800000);
+  const initial=parseInt(G.settings.cfgInitial||0);
   const startDate=G.settings.cfgStart||'';
   const months=monthsAllocated(startDate);
   const perStock=monthly/30;
   const totalAlloc=monthly*months;
   const extraDeps=(G.portfolio&&G.portfolio.extra_deposits)||[];
   const extraTotal=extraDeps.reduce((a,d)=>a+(d.amount_krw||0),0);
-  const totalBudget=totalAlloc+extraTotal;
+  const totalBudget=initial+totalAlloc+extraTotal;
   const invMap=investedByTicker();
   const totalInv=Object.values(invMap).reduce((a,b)=>a+b,0);
   const surplus=Math.max(0,totalBudget-totalInv);
@@ -611,8 +641,9 @@ function renderHome(){
   const b=document.getElementById('totalPnlBadge');
   b.textContent=`${retNum>=0?'+':''}${ret}%`;b.className='pnl-badge '+(retNum>=0?'pos':'neg');
 
+  const budgetLabel=initial>0?`💰 총 배정금 (초기${(initial/10000).toFixed(0)}만+${months}개월)`:`💰 누적 배정금 (${months}개월)`;
   document.getElementById('investSummary').innerHTML=[
-    ['💰 누적 배정금 ('+months+'개월)',totalBudget>0?Math.round(totalBudget).toLocaleString()+'원':'시작일 설정 필요','color:var(--blue)'],
+    [budgetLabel,totalBudget>0?Math.round(totalBudget).toLocaleString()+'원':'시작일 설정 필요','color:var(--blue)'],
     ['💵 실제 매수금',totalInv>0?Math.round(totalInv).toLocaleString()+'원':'0원',''],
     ['💧 잉여현금',surplus>0?Math.round(surplus).toLocaleString()+'원':'0원','color:var(--yellow)'],
     ['💰 누적 배당금',totalDiv>0?totalDiv.toLocaleString()+'원':'0원','color:var(--green)'],
@@ -971,7 +1002,7 @@ function renderHoldings(){
       :'';
     const wps=getWeightedPerStock(h.ticker,monthly,stage,c30);
     const sw=getSectorWeight(h.ticker,stage);
-    const alloc=wps*months;
+    const alloc=getTotalAllocPerTicker(h.ticker);
     const inv=invMap[h.ticker]||0;
     const surplus=Math.max(0,alloc-inv);
     const progPct=alloc>0?Math.min(100,inv/alloc*100):0;
@@ -1036,7 +1067,7 @@ function renderSignals(){
       const doneLv=stg.done||0;
       const wps=getWeightedPerStock(s.ticker,monthly,stage,c30);
       const sw=getSectorWeight(s.ticker,stage);
-      const alloc=wps*months;
+      const alloc=getTotalAllocPerTicker(s.ticker);
       const inv=invMap[s.ticker]||0;
       const surplus=Math.max(0,alloc-inv);
       const cls=curLv>=3?'strong':curLv>=2?'mid':'weak';
@@ -1103,7 +1134,7 @@ function renderSignals(){
   const items=c30.map(ticker=>{
     const wps=getWeightedPerStock(ticker,monthly,stage,c30);
     const sw=getSectorWeight(ticker,stage);
-    const alloc=wps*months;
+    const alloc=getTotalAllocPerTicker(ticker);
     const inv=invMap[ticker]||0;
     const surplus=Math.max(0,alloc-inv);
     const pct=alloc>0?Math.min(100,inv/alloc*100):0;
@@ -1149,13 +1180,13 @@ function openBuyModal(ticker, level){
   G._modalTicker=ticker;
   G._modalLevel=level;
   const monthly=parseInt(G.settings.cfgMonthly||800000);
-  const months=monthsAllocated(G.settings.cfgStart||'');
   const stage=G._currentStage||3;
   const c30=G._current30||[];
   const wps=getWeightedPerStock(ticker,monthly,stage,c30);
   const sw=getSectorWeight(ticker,stage);
+  const totalAlloc=getTotalAllocPerTicker(ticker);
   const invMap=investedByTicker();
-  const surplus=Math.max(0,wps*months-(invMap[ticker]||0));
+  const surplus=Math.max(0,totalAlloc-(invMap[ticker]||0));
   const stages=getStages();
   const doneLv=(stages[ticker]||{}).done||0;
   const newR=levelToRatio(level);
@@ -1167,7 +1198,7 @@ function openBuyModal(ticker, level){
   G._modalSurplus=surplus;
   const wtLabel=sw>=1.5?'×1.5':sw>=1.2?'×1.2':'×0.7';
   document.getElementById('modalTitle').textContent=`${ticker} 매수 확정 (${wtLabel})`;
-  document.getElementById('modalSubtitle').textContent=`${lvTxt} | WR ${(sig.wr||0).toFixed(1)} | 잉여 ${Math.round(surplus).toLocaleString()}원 | 배정 ${Math.round(wps).toLocaleString()}원/월`;
+  document.getElementById('modalSubtitle').textContent=`${lvTxt} | WR ${(sig.wr||0).toFixed(1)} | 잉여 ${Math.round(surplus).toLocaleString()}원 | 총배정 ${Math.round(totalAlloc).toLocaleString()}원`;
   document.getElementById('modalPrice').value=sig.price||'';
   document.getElementById('modalFx').value=G.data.fx_rate||1350;
   updateModalSummary();
@@ -1452,6 +1483,7 @@ function saveSetting(){
   G.settings.ghToken=document.getElementById('ghToken').value;
   G.settings.ghRepo=document.getElementById('ghRepo').value;
   G.settings.ghFile=document.getElementById('ghFile').value||'portfolio.json';
+  G.settings.cfgInitial=document.getElementById('cfgInitial').value;
   G.settings.cfgMonthly=document.getElementById('cfgMonthly').value;
   G.settings.cfgStart=document.getElementById('cfgStart').value;
   G.settings.cfgWrThr=document.getElementById('cfgWrThr').value;
@@ -1464,6 +1496,7 @@ function renderSettings(){
   document.getElementById('ghToken').value=s.ghToken||'';
   document.getElementById('ghRepo').value=s.ghRepo||'';
   document.getElementById('ghFile').value=s.ghFile||'portfolio.json';
+  document.getElementById('cfgInitial').value=s.cfgInitial||'0';
   document.getElementById('cfgMonthly').value=s.cfgMonthly||'800000';
   document.getElementById('cfgStart').value=s.cfgStart||'';
   document.getElementById('cfgWrThr').value=s.cfgWrThr||'-60';
