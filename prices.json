@@ -1,22 +1,24 @@
 {
-  "updated_at": "2026-03-09 10:02 KST",
+  "updated_at": "2026-03-09 10:18 KST",
   "fx_rate": 1484.0,
   "egg": {
     "stage": 2,
     "desc": "② 바닥 형성 — 산업재/소재 관심",
-    "score": 0,
+    "score": 1,
     "indicators": {
-      "fed_rate": null,
+      "fed_rate": 3.64,
       "spread": null,
       "vix": null,
-      "unemp": null,
+      "unemp": 4.4,
       "cpi_yoy": 2.4,
       "m2_yoy": null,
       "pmi": null,
       "claims": null,
       "hy_spread": null
     },
-    "reasons": []
+    "reasons": [
+      "저금리"
+    ]
   },
   "current_30": [
     "CAT",
