@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-09 10:18 KST",
+  "updated_at": "2026-03-09 11:43 KST",
   "fx_rate": 1484.0,
   "egg": {
     "stage": 2,
@@ -9,8 +9,8 @@
       "fed_rate": 3.64,
       "spread": null,
       "vix": null,
-      "unemp": 4.4,
-      "cpi_yoy": 2.4,
+      "unemp": null,
+      "cpi_yoy": null,
       "m2_yoy": null,
       "pmi": null,
       "claims": null,
