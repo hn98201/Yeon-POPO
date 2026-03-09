@@ -459,7 +459,7 @@ def main():
     print("종목 가격 및 WR 계산 중...")
     price_data = {}
     for ticker in NOBL_UNIVERSE:
-        safe_sleep(0.3)
+        safe_sleep(1.2)
         p  = get_price(ticker)
         wr = get_weekly_wr(ticker)
         price_data[ticker] = {**p, 'wr': wr}
