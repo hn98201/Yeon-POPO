@@ -457,6 +457,15 @@ function getWeightedPerStock(ticker,monthly,stage,current30){
   return allocs[ticker]||(monthly/30);
 }
 
+// ══ 종목별 가중 비율 (반올림 문제 없이 정확한 비율)
+function getWeightedRatio(ticker,stage,current30){
+  if(!current30||!current30.length)return 1/30;
+  let totalW=0;
+  current30.forEach(t=>{totalW+=getSectorWeight(t,stage);});
+  if(totalW===0)return 1/30;
+  return getSectorWeight(ticker,stage)/totalW;
+}
+
 // ══ 종목별 총 배정금 (초기투자금 + 월적립 × 개월 + 추가입금, 전부 가중)
 function getTotalAllocPerTicker(ticker){
   const monthly=parseInt(G.settings.cfgMonthly||800000);
@@ -468,16 +477,11 @@ function getTotalAllocPerTicker(ticker){
   const extraDeps=(G.portfolio&&G.portfolio.extra_deposits)||[];
   const extraTotal=extraDeps.reduce((a,d)=>a+(d.amount_krw||0),0);
 
-  // 가중치 비율 계산
-  const allocs=calcWeightedAlloc(1,stage,c30);
-  const myRatio=allocs[ticker]||(1/30);
+  const ratio=getWeightedRatio(ticker,stage,c30);
 
-  // 초기투자금 가중 배분
-  const initialAlloc=initial*myRatio;
-  // 월적립 가중 배분 × 개월
-  const monthlyAlloc=monthly*myRatio*months;
-  // 추가입금 가중 배분
-  const extraAlloc=extraTotal*myRatio;
+  const initialAlloc=initial*ratio;
+  const monthlyAlloc=monthly*ratio*months;
+  const extraAlloc=extraTotal*ratio;
 
   return Math.round(initialAlloc+monthlyAlloc+extraAlloc);
 }
