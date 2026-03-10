@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-03-10 23:29 KST",
-  "fx_rate": 1469.17,
+  "updated_at": "2026-03-10 23:33 KST",
+  "fx_rate": 1468.81,
   "egg": {
     "stage": 4,
     "score": 3.0,
@@ -8,7 +8,7 @@
     "indicators": {
       "fed_rate": 3.64,
       "spread": 0.56,
-      "vix": 24.7,
+      "vix": 24.69,
       "unemp": 4.4,
       "cpi_yoy": 2.83,
       "m2_yoy": 4.29,
