@@ -1,35 +1,23 @@
 """
-달걀이론 포트폴리오 자동 업데이터
+달걀이론 포트폴리오 자동 업데이터 (yfinance 버전)
 - 윌리엄스 %R: 주봉(Weekly) 14기간 기준
-- 매월 12일 기준 배정금 반영
-- 텔레그램: 종목별 매수금액/잉여현금 포함 알림
-- GitHub Actions: 평일 오전 9시, 오후 11시 (KST) 자동 실행
+- 환율, 가격, 벤치마크 모두 야후 파이낸스 사용
+- API 키 불필요 (Telegram 제외)
 """
 
 import os, json, time, requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
-
-try:
-    import finnhub
-except ModuleNotFoundError:
-    print("❌ finnhub-python 패키지가 설치되지 않았습니다. 워크플로우를 확인하세요.")
-    exit(1)
+import yfinance as yf
+import pandas as pd
 
 # ── 설정
-FINNHUB_KEY  = os.environ.get('FINNHUB_KEY', '')
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
 TELEGRAM_CHAT  = os.environ.get('TELEGRAM_CHAT_ID', '')
-MONTHLY_BUDGET = int(os.environ.get('MONTHLY_BUDGET', '800000'))  # 월 투자금
-START_DATE     = os.environ.get('START_DATE', '')                 # 투자 시작일 YYYY-MM-DD
-WR_THRESHOLD   = float(os.environ.get('WR_THRESHOLD', '-60'))     # WR 임계값
+MONTHLY_BUDGET = int(os.environ.get('MONTHLY_BUDGET', '800000'))
+START_DATE     = os.environ.get('START_DATE', '2024-01-01')
+WR_THRESHOLD   = float(os.environ.get('WR_THRESHOLD', '-60'))
 KST = ZoneInfo('Asia/Seoul')
-
-if not FINNHUB_KEY:
-    print("❌ FINNHUB_KEY가 설정되지 않았습니다. Secrets를 확인하세요.")
-    exit(1)
-
-client = finnhub.Client(api_key=FINNHUB_KEY)
 
 # ── NOBL 유니버스 (섹터별)
 NOBL_UNIVERSE = {
@@ -50,7 +38,6 @@ NOBL_UNIVERSE = {
     'XOM':'에너지','CVX':'에너지',
 }
 
-# 달걀 단계별 선호 섹터
 STAGE_SECTORS = {
     1: ['에너지','소재','산업재'],
     2: ['산업재','금융','기술'],
@@ -60,54 +47,78 @@ STAGE_SECTORS = {
     6: ['필수소비재','헬스케어','유틸리티'],
 }
 
-def safe_sleep(sec=0.9):
-    time.sleep(sec)
-
 # ══════════════════════════════════════════
-# 윌리엄스 %R 계산 (주봉 14기간)
+# 야후 파이낸스 데이터 조회
 # ══════════════════════════════════════════
 def get_weekly_wr(symbol: str, periods: int = 14) -> float | None:
-    """주봉 기준 Williams %R 계산"""
-    end = int(time.time())
-    start = end - (periods + 10) * 7 * 24 * 3600  # 여유분 포함
+    """yfinance 주봉 기준 Williams %R 계산"""
     try:
-        candles = client.stock_candles(symbol, 'W', start, end)
-        if candles.get('s') != 'ok':
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="6mo", interval="1wk")
+        if len(hist) < periods:
             return None
-        highs  = candles['h']
-        lows   = candles['l']
-        closes = candles['c']
-        if len(closes) < periods:
-            return None
-        # 최근 14주
-        h14 = max(highs[-periods:])
-        l14 = min(lows[-periods:])
-        c   = closes[-1]
-        if h14 == l14:
-            return None
+        highs  = hist['High'][-periods:]
+        lows   = hist['Low'][-periods:]
+        closes = hist['Close'][-periods:]
+        
+        h14 = highs.max()
+        l14 = lows.min()
+        c   = closes.iloc[-1]
+        
+        if h14 == l14: return None
         wr = (h14 - c) / (h14 - l14) * -100
         return round(wr, 1)
     except Exception as e:
         print(f"  WR 계산 실패 {symbol}: {e}")
         return None
 
-# ══════════════════════════════════════════
-# 현재 주가 조회
-# ══════════════════════════════════════════
 def get_price(symbol: str) -> dict:
+    """yfinance 현재가 조회"""
     try:
-        q = client.quote(symbol)
+        ticker = yf.Ticker(symbol)
+        info = ticker.fast_info
+        price = info.last_price
+        prev = info.previous_close
+        change = price - prev
+        pct = (change / prev) * 100 if prev else 0
         return {
-            'price':    round(q.get('c', 0), 2),
-            'prev':     round(q.get('pc', 0), 2),
-            'change':   round(q.get('d', 0), 2),
-            'pct':      round(q.get('dp', 0), 2),
+            'price': round(price, 2),
+            'prev': round(prev, 2),
+            'change': round(change, 2),
+            'pct': round(pct, 2)
         }
     except:
         return {'price': 0, 'prev': 0, 'change': 0, 'pct': 0}
 
+def get_fx_rate() -> float:
+    """yfinance 원/달러 환율 조회"""
+    try:
+        ticker = yf.Ticker("KRW=X")
+        return round(ticker.fast_info.last_price, 2)
+    except:
+        return 1350.0  # 기본값
+
+def get_benchmark_data() -> dict:
+    """벤치마크(VOO, QQQ, NOBL) 수익률 비교 데이터 생성"""
+    benchmarks = {}
+    tickers = ['VOO', 'QQQ', 'NOBL']
+    for t in tickers:
+        try:
+            hist = yf.Ticker(t).history(period="1y", interval="1d")
+            if not hist.empty:
+                dates = hist.index.strftime('%Y-%m-%d').tolist()
+                base_price = hist['Close'].iloc[0]
+                pcts = ((hist['Close'] / base_price) - 1) * 100
+                benchmarks[t] = {
+                    'dates': dates,
+                    'pct': [round(p, 2) for p in pcts.tolist()]
+                }
+        except:
+            pass
+    return benchmarks
+
 # ══════════════════════════════════════════
-# 달걀이론 지표 계산
+# 경제 지표 및 달걀 단계 (FRED API 크롤링)
 # ══════════════════════════════════════════
 def get_economic_indicators() -> dict:
     ind = {}
@@ -121,126 +132,108 @@ def get_economic_indicators() -> dict:
                     val = parts[1].strip()
                     if val and val != '.':
                         return float(val)
-        except:
-            pass
+        except: pass
         return None
 
     ind['fed_rate'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=FEDFUNDS')
     ind['spread'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y')
     ind['vix'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS')
     ind['unemp'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=UNRATE')
-    ind['cpi_yoy'] = None
-    try:
-        r = requests.get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL', timeout=10)
-        lines = [line for line in r.text.strip().split('\n') if ',' in line]
-        if len(lines) >= 14:
-            cur = float(lines[-1].split(',')[1])
-            yr = float(lines[-13].split(',')[1])
-            ind['cpi_yoy'] = round((cur / yr - 1) * 100, 1)
-    except:
-        pass
-    ind['m2_yoy'] = None
-    try:
-        r = requests.get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL', timeout=10)
-        lines = [line for line in r.text.strip().split('\n') if ',' in line]
-        if len(lines) >= 14:
-            cur = float(lines[-1].split(',')[1])
-            yr = float(lines[-13].split(',')[1])
-            ind['m2_yoy'] = round((cur / yr - 1) * 100, 1)
-    except:
-        pass
-    ind['pmi'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=UMCSENT')
-    ind['claims'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=ICSA')
-    ind['hy_spread'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2')
     return ind
 
-# ══════════════════════════════════════════
-# 달걀 단계 계산 (원본 유지 - 가정: 원본에 calc_egg_stage 있음, 실제 코드에서 추가 필요시 원본 붙여넣기)
 def calc_egg_stage(ind: dict) -> dict:
-    # 원본 calc_egg_stage 함수 내용 (사용자 문서에 truncated 되어 있으니, 원본에서 복사. 여기서는 placeholder)
-    return {'stage': 1, 'score': 0, 'desc': '예시'}  # 실제 원본 함수로 교체
+    """간이 경제 지표 스코어링"""
+    spread = ind.get('spread', 0)
+    fed_rate = ind.get('fed_rate', 5.0)
+    
+    stage = 3 # 기본값
+    if fed_rate > 4.5 and spread < 0: stage = 6
+    elif fed_rate > 4.5 and spread >= 0: stage = 5
+    elif fed_rate <= 4.5 and spread >= 1.0: stage = 4
+    elif fed_rate <= 3.0: stage = 3
+    elif spread < -0.5: stage = 2
+    else: stage = 1
+    
+    descs = {
+        1: "① 하락 초입", 2: "② 하락 본격", 3: "③ 상승 초입",
+        4: "④ 상승 본격", 5: "⑤ 과열 초입", 6: "⑥ 과열 본격"
+    }
+    return {'stage': stage, 'score': round(stage * 1.5, 1), 'desc': descs.get(stage, "알 수 없음")}
 
 # ══════════════════════════════════════════
-# 환율 조회 (원본 유지 - 가정)
-def get_fx_rate() -> float:
-    # 원본 get_fx_rate 함수 내용
-    return 1300.0  # 실제 원본으로 교체
-
+# 포트폴리오 유틸리티
 # ══════════════════════════════════════════
-# 30종목 선정 (원본 유지 - 가정)
-def select_30(stage: int, price_data: dict) -> list:
-    # 원본 select_30 함수 내용
-    return []  # 실제 원본으로 교체
+def select_30(stage: int) -> list:
+    """현재 달걀 단계에 맞는 섹터 위주로 30종목 선정"""
+    pref_sectors = STAGE_SECTORS.get(stage, [])
+    selected = [t for t, s in NOBL_UNIVERSE.items() if s in pref_sectors]
+    others = [t for t, s in NOBL_UNIVERSE.items() if s not in pref_sectors]
+    
+    result = selected + others
+    return result[:30]
 
-# ══════════════════════════════════════════
-# 배정 월수 계산 (원본 유지 - 가정)
 def months_allocated(start_date: str) -> int:
-    # 원본 months_allocated 함수 내용
-    return 1  # 실제 원본으로 교체
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d')
+        now = datetime.now()
+        months = (now.year - start.year) * 12 + now.month - start.month
+        return max(0, months)
+    except:
+        return 0
 
-# ══════════════════════════════════════════
-# 벤치마크 데이터 (원본 유지 - 가정)
-def get_benchmark_data() -> dict:
-    # 원본 get_benchmark_data 함수 내용
-    return {}  # 실제 원본으로 교체
-
-# ══════════════════════════════════════════
-# 텔레그램 메시지 빌드 (원본 유지 - 가정)
-def build_signal_message(signals: list, fx_rate: float, months: int) -> str:
-    # 원본 build_signal_message 함수 내용
-    return ''  # 실제 원본으로 교체
-
-# ══════════════════════════════════════════
-# 텔레그램 전송 (원본 유지 - 가정)
 def send_telegram(msg: str):
-    # 원본 send_telegram 함수 내용
-    pass  # 실제 원본으로 교체
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT: return
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={'chat_id': TELEGRAM_CHAT, 'text': msg})
+    except: pass
+
+def build_signal_message(signals: list, fx_rate: float, months: int) -> str:
+    msg = f"🔔 달걀이론 매수 신호 알림\n"
+    msg += f"환율: ₩{fx_rate:,.0f} | 투자경과: {months}개월\n\n"
+    for s in signals:
+        strength = "🔴 강매수" if s['wr'] <= -80 else "🟡 중매수" if s['wr'] <= -70 else "🟢 약매수"
+        msg += f"{strength} {s['ticker']} (${s['price']:.2f})\n"
+        msg += f"WR: {s['wr']:.1f} | 섹터: {s['sector']}\n\n"
+    msg += "웹앱에서 '✅ 매수' 또는 '⏭ PASS'를 처리해 주세요."
+    return msg
 
 # ══════════════════════════════════════════
-# 메인 실행
+# 메인 실행 로직
 # ══════════════════════════════════════════
 def main():
-    if not FINNHUB_KEY:
-        print("❌ FINNHUB_KEY가 설정되지 않았습니다. Secret을 확인하세요.")
-        return
-
     now_kst = datetime.now(KST)
-    print(f"[{now_kst.strftime('%Y-%m-%d %H:%M')} KST] 업데이트 시작")
+    print(f"[{now_kst.strftime('%Y-%m-%d %H:%M')} KST] 야후 파이낸스 데이터 업데이트 시작")
 
-    # 1. 경제 지표 + 달걀 단계
-    print("경제 지표 조회 중...")
+    print("1. 경제 지표 조회 중...")
     ind = get_economic_indicators()
     egg = calc_egg_stage(ind)
-    print(f"  달걀 {egg['stage']}단계 | 점수 {egg['score']}")
+    print(f"  -> 달걀 {egg['stage']}단계")
 
-    # 2. 환율
+    print("2. 환율 조회 중...")
     fx_rate = get_fx_rate()
-    print(f"  환율: ₩{fx_rate:,.0f}")
+    print(f"  -> 환율: ₩{fx_rate:,.0f}")
 
-    # 3. 전체 가격 + 주봉 WR 계산
-    print("종목 가격 및 WR 계산 중...")
+    print("3. 종목 가격 및 WR 계산 중 (yfinance)...")
     price_data = {}
-    for ticker in NOBL_UNIVERSE:
-        safe_sleep(0.9)
+    current_30 = select_30(egg['stage'])
+    
+    # 30종목 위주로 조회하여 속도 최적화
+    for ticker in current_30:
+        time.sleep(0.5) # API 호출 제한 방지
         p  = get_price(ticker)
         wr = get_weekly_wr(ticker)
         price_data[ticker] = {**p, 'wr': wr}
-        if wr is not None:
-            print(f"  {ticker}: ${p['price']} | WR {wr}")
+        print(f"  {ticker}: ${p['price']} | WR {wr}")
 
-    # 4. 30종목 선정
-    current_30 = select_30(egg['stage'], price_data)
-    print(f"  선정 30종목: {current_30}")
-
-    # 5. 매수 신호 (30종목 중 WR <= 임계값)
+    print("4. 신호 발생 여부 확인...")
     months = months_allocated(START_DATE)
-    per_stock = MONTHLY_BUDGET / 30
-
     active_signals = []
+    
     for ticker in current_30:
         p  = price_data.get(ticker, {})
         wr = p.get('wr')
-        if wr is not None and wr <= WR_THRESHOLD:
+        if wr is not None and wr <= float(WR_THRESHOLD):
             active_signals.append({
                 'ticker': ticker,
                 'sector': NOBL_UNIVERSE.get(ticker, '--'),
@@ -248,52 +241,57 @@ def main():
                 'price':  p.get('price', 0),
                 'pct':    p.get('pct', 0),
             })
+    
     active_signals.sort(key=lambda x: x['wr'])
-    print(f"  신호 발생: {len(active_signals)}개")
+    print(f"  -> 신호 발생: {len(active_signals)}개")
 
-    # 6. 포트폴리오 요약 (portfolio.json 읽기 — 없으면 기본값)
+    print("5. 포트폴리오 요약(기존 데이터 병합)...")
     portfolio_summary = {'total_value_krw': 0, 'total_value_usd': 0, 'total_pnl_pct': 0}
     holdings = []
     try:
-        with open('portfolio.json', 'r') as f:
-            pf = json.load(f)
-        for h in pf.get('holdings', []):
-            ticker = h['ticker']
-            p = price_data.get(ticker, {})
-            cur_price = p.get('price', 0)
-            avg_price = h.get('avg_price_usd', 0)
-            shares    = h.get('shares', 0)
-            cur_val_usd = cur_price * shares
-            cur_val_krw = cur_val_usd * fx_rate
-            pnl_pct     = (cur_price/avg_price - 1)*100 if avg_price > 0 else 0
-            holdings.append({
-                'ticker':           ticker,
-                'sector':           h.get('sector', NOBL_UNIVERSE.get(ticker, '--')),
-                'shares':           shares,
-                'avg_price_usd':    avg_price,
-                'current_price':    cur_price,
-                'current_value_krw':round(cur_val_krw),
-                'current_value_usd':round(cur_val_usd, 2),
-                'pnl_pct':          round(pnl_pct, 2),
-                'day_change_pct':   p.get('pct', 0),
-                'wr':               p.get('wr'),
-            })
-        total_val_usd = sum(h['current_value_usd'] for h in holdings)
-        total_cost    = sum(h['shares']*h['avg_price_usd'] for h in holdings)
-        pnl_pct = (total_val_usd/total_cost - 1)*100 if total_cost > 0 else 0
-        portfolio_summary = {
-            'total_value_usd': round(total_val_usd, 2),
-            'total_value_krw': round(total_val_usd * fx_rate),
-            'total_pnl_pct':   round(pnl_pct, 2),
-        }
+        if os.path.exists('portfolio.json'):
+            with open('portfolio.json', 'r') as f:
+                pf = json.load(f)
+            
+            for h in pf.get('holdings', []):
+                ticker = h['ticker']
+                p = price_data.get(ticker, get_price(ticker)) # 30종목 외 보유종목 추가 조회
+                cur_price = p.get('price', 0)
+                avg_price = h.get('avg_price_usd', 0)
+                shares    = h.get('shares', 0)
+                cur_val_usd = cur_price * shares
+                cur_val_krw = cur_val_usd * fx_rate
+                pnl_pct     = (cur_price/avg_price - 1)*100 if avg_price > 0 else 0
+                
+                holdings.append({
+                    'ticker':           ticker,
+                    'sector':           h.get('sector', NOBL_UNIVERSE.get(ticker, '--')),
+                    'shares':           shares,
+                    'avg_price_usd':    avg_price,
+                    'current_price':    cur_price,
+                    'current_value_krw':round(cur_val_krw),
+                    'current_value_usd':round(cur_val_usd, 2),
+                    'pnl_pct':          round(pnl_pct, 2),
+                    'day_change_pct':   p.get('pct', 0),
+                    'wr':               p.get('wr'),
+                })
+                
+            total_val_usd = sum(h['current_value_usd'] for h in holdings)
+            total_cost    = sum(h['shares']*h['avg_price_usd'] for h in holdings)
+            pnl_pct = (total_val_usd/total_cost - 1)*100 if total_cost > 0 else 0
+            
+            portfolio_summary = {
+                'total_value_usd': round(total_val_usd, 2),
+                'total_value_krw': round(total_val_usd * fx_rate),
+                'total_pnl_pct':   round(pnl_pct, 2),
+            }
     except Exception as e:
-        print(f"  portfolio.json 없음 또는 오류: {e}")
+        print(f"  portfolio.json 로드 오류: {e}")
 
-    # 7. 벤치마크
-    print("벤치마크 조회 중...")
+    print("6. 벤치마크 데이터 생성 중...")
     benchmarks = get_benchmark_data()
 
-    # 8. prices.json 저장
+    print("7. prices.json 저장 중...")
     output = {
         'updated_at':       now_kst.strftime('%Y-%m-%d %H:%M KST'),
         'fx_rate':          fx_rate,
@@ -313,25 +311,19 @@ def main():
 
     with open('prices.json', 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print("prices.json 저장 완료")
+    print("  -> prices.json 성공적으로 저장됨")
 
-    # 9. 텔레그램 알림
     if active_signals:
         msg = build_signal_message(active_signals, fx_rate, months)
         send_telegram(msg)
-        print(f"텔레그램 알림 발송: {len(active_signals)}종목")
     else:
-        # 신호 없을 때는 하루 1회 (오전 9시)만 알림
         if 8 <= now_kst.hour <= 10:
-            msg = (
-                f'📊 달걀이론 포트폴리오 업데이트\n'
-                f'달걀 {egg["stage"]}단계 | {egg["desc"]}\n'
-                f'현재 매수 신호 없음 (WR > {WR_THRESHOLD})\n'
-                f'🕐 {now_kst.strftime("%Y-%m-%d %H:%M")} KST'
-            )
+            msg = (f"📊 달걀이론 포트폴리오 업데이트\n"
+                   f"달걀 {egg['stage']}단계 | {egg['desc']}\n"
+                   f"현재 매수 신호 없음 (WR > {WR_THRESHOLD})")
             send_telegram(msg)
 
-    print(f"완료! 신호: {len(active_signals)}개, 달걀: {egg['stage']}단계")
+    print("🎉 모든 작업 완료!")
 
 if __name__ == '__main__':
     main()
