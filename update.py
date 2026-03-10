@@ -134,10 +134,13 @@ ECON_TICKERS = {
     'hy_spread': 'BAMLH0A0HYM2'
 }
 
-# ================== 2. get_economic_indicators 함수 전체 교체 ==================
+# ══════════════════════════════════════════
+# 경제 지표 및 달걀 단계 (FRED API 직접 방식 - 강화 버전)
+# ══════════════════════════════════════════
+
 def get_economic_indicators() -> dict:
     ind = {}
-    print("📊 9가지 핵심 지표 조회 중... (FRED CSV 직접 방식 - 강화 버전)")
+    print("📊 9가지 핵심 지표 조회 및 M2 증가율 계산 중...")
     
     for name, ticker in ECON_TICKERS.items():
         try:
@@ -149,32 +152,34 @@ def get_economic_indicators() -> dict:
                 response = requests.get(url, timeout=15)
                 response.raise_for_status()
                 
-                csv_text = response.text
-                if not csv_text.strip():
-                    raise ValueError("빈 CSV 응답")
-                
-                df = pd.read_csv(StringIO(csv_text))
-                
-                # ✅ 수정: 컬럼명을 정규화한 후, 두 번째 컬럼(데이터 컬럼)을 선택
+                df = pd.read_csv(StringIO(response.text))
                 df.columns = df.columns.str.strip().str.upper()
-                val_col = df.columns[1] 
+                val_col = df.columns[1]
                 
-                # 마지막 유효 값 찾기 (해당 컬럼에서 '.' 또는 NaN 제외)
-                series = df[val_col].replace('.', pd.NA).dropna()
-                
+                # '.' 표시된 데이터 결측치 처리
+                df[val_col] = pd.to_numeric(df[val_col], errors='coerce')
+                series = df[val_col].dropna()
+
                 if series.empty:
-                    raise ValueError(f"유효한 {val_col} 데이터 없음")
-                if series.empty:
-                    raise ValueError("유효한 VALUE 데이터 없음 (모두 . 또는 빈 값)")
-                
-                val = float(series.iloc[-1])
-                ind[name] = round(val, 2)
+                    raise ValueError(f"{name} 데이터 없음")
+
+                # ✅ M2와 CPI는 '현재 값'이 아니라 '전년 대비 증가율(YoY)'이 핵심임
+                if name in ['m2_yoy', 'cpi_yoy']:
+                    if len(series) >= 13:
+                        cur_val = series.iloc[-1]
+                        prev_val = series.iloc[-13] # 12개월 전 데이터
+                        yoy_rate = ((cur_val / prev_val) - 1) * 100
+                        ind[name] = round(yoy_rate, 2)
+                    else:
+                        ind[name] = round(series.iloc[-1], 2) # 데이터 부족 시 현재값
+                else:
+                    ind[name] = round(series.iloc[-1], 2)
             
-            time.sleep(0.4)  # 요청 간격 조금 더 늘림
+            time.sleep(0.4)
             print(f"  ✅ {name:12} = {ind[name]}")
         
         except Exception as e:
-            print(f"  ❌ {name:12} ({ticker}) 실패 → {type(e).__name__}: {str(e)}")
+            print(f"  ❌ {name:12} 실패: {e}")
             ind[name] = None
     
     return ind
@@ -182,59 +187,58 @@ def get_economic_indicators() -> dict:
 def calc_egg_stage(ind: dict) -> dict:
     score = 0.0
     
-    # [1] 금리 (Fed Rate)
+    # [1] 금리: 5% 이상 고금리는 하락 압력 (-4.0)
     fr = ind.get('fed_rate') or 0
     if fr >= 5.0: score -= 4.0
     elif fr <= 2.0: score += 2.0
     
-    # [2] 장단기 금리차 (Spread)
+    # [2] 장단기 금리차: 역전 시 강력한 경기 침체 신호 (-3.5)
     ts = ind.get('spread') or 0
     if ts < 0: score -= 3.5
     elif ts >= 0.5: score += 1.5
     
-    # [3] VIX (공포지수)
+    # [3] VIX: 25 이상이면 시장 패닉 상태 (-2.5)
     vx = ind.get('vix') or 0
     if vx >= 25: score -= 2.5
     elif vx <= 15: score += 2.0
     
-    # [4] M2 유동성 (M2 YoY) - 매우 중요
+    # [4] M2 유동성: 증가율 0% 이하는 돈이 마르는 상태 (-3.0)
     m2 = ind.get('m2_yoy') or 0
     if m2 <= 0: score -= 3.0
     elif m2 >= 5.0: score += 2.0
     
-    # [5] 인플레이션 (CPI YoY)
+    # [5] 인플레이션: 4% 이상 고물가는 금리 인하의 적 (-3.0)
     cp = ind.get('cpi_yoy') or 0
     if cp >= 4.0: score -= 3.0
     elif cp <= 2.5: score += 1.5
     
-    # [6] 하이일드 스프레드 (부도 위험)
+    # [6] 하이일드 스프레드: 4.5 이상이면 기업 부도 위험 (-3.0)
     hy = ind.get('hy_spread') or 0
     if hy >= 4.5: score -= 3.0
     elif hy <= 3.5: score += 1.5
     
-    # [7] 실업률 (Unemployment)
+    # [7] 실업률: 4.5% 이상이면 경기 둔화 (-2.0)
     ur = ind.get('unemp') or 0
     if ur >= 4.5: score -= 2.0
     elif ur <= 3.8: score += 1.0
     
-    # [8] 소비자 심리 (PMI/Sentiment)
+    # [8] 소비자 심리: 50 이하면 소비 위축 (-1.5)
     pmi = ind.get('pmi') or 0
     if pmi <= 50: score -= 1.5
     elif pmi >= 70: score += 1.0
     
-    # [9] 신규 실업수당 청구 (Claims) - 단기 고용 지표
+    # [9] 신규 실업수당 청구: 25만 건 이상이면 고용 시장 균열 (-1.0)
     cl = ind.get('claims') or 0
-    # 최근 평균 대비 급증 시 감점 (예시 기준치)
     if cl >= 250000: score -= 1.0 
     elif cl <= 200000: score += 0.5
 
-    # ── 단계 결정 (총점 기준)
-    if score <= -9: stage = 1        # 하락 초입
-    elif score <= -4: stage = 2      # 하락 본격
-    elif score <= 1: stage = 3       # 상승 초입
-    elif score <= 5: stage = 4       # 상승 본격
-    elif score <= 9: stage = 5       # 과열 초입
-    else: stage = 6                  # 과열 본격
+    # ── 엄격한 단계 결정 (1단계 진입 장벽을 낮추고 4단계 진입 장벽을 높임)
+    if score <= -9: stage = 1
+    elif score <= -4: stage = 2
+    elif score <= 1: stage = 3
+    elif score <= 5: stage = 4
+    elif score <= 9: stage = 5
+    else: stage = 6
     
     descs = {
         1: "① 하락 초입 (A)", 2: "② 하락 본격 (B)", 3: "③ 상승 초입 (C)",
@@ -247,7 +251,6 @@ def calc_egg_stage(ind: dict) -> dict:
         'desc': descs.get(stage, "분석 중"),
         'indicators': ind
     }
-
 # ══════════════════════════════════════════
 # 포트폴리오 유틸리티
 # ══════════════════════════════════════════
