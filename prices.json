@@ -1,10 +1,21 @@
 {
-  "updated_at": "2026-03-10 17:21 KST",
-  "fx_rate": 1468.67,
+  "updated_at": "2026-03-10 17:58 KST",
+  "fx_rate": 1471.2,
   "egg": {
-    "stage": 1,
-    "score": 1.5,
-    "desc": "① 하락 초입"
+    "stage": 2,
+    "score": -2.5,
+    "desc": "② 하락 본격 (B)",
+    "all_metrics": {
+      "fed_rate": 3.5929999351501465,
+      "term_spread": null,
+      "vix": 23.139999389648438,
+      "unemp": null,
+      "cpi": null,
+      "ind_prod": null,
+      "retail_sales": null,
+      "housing": null,
+      "high_yield": 80.16999816894531
+    }
   },
   "current_30": [
     "CAT",
@@ -19,15 +30,15 @@
     "ROL",
     "FAST",
     "NDSN",
-    "NUE",
-    "PPG",
-    "SHW",
-    "LIN",
-    "ECL",
-    "APD",
-    "ALB",
-    "XOM",
-    "CVX",
+    "CB",
+    "CINF",
+    "AFL",
+    "BEN",
+    "SPGI",
+    "AMP",
+    "AON",
+    "IBM",
+    "TXN",
     "KO",
     "PG",
     "PEP",
@@ -40,6 +51,13 @@
   ],
   "active_signals": [
     {
+      "ticker": "AMP",
+      "sector": "금융",
+      "wr": -84.1,
+      "price": 461.48,
+      "pct": -0.97
+    },
+    {
       "ticker": "GIS",
       "sector": "필수소비재",
       "wr": -83.7,
@@ -51,28 +69,14 @@
       "sector": "산업재",
       "wr": -77.9,
       "price": 57.57,
-      "pct": -0.31
-    },
-    {
-      "ticker": "SHW",
-      "sector": "소재",
-      "wr": -74.9,
-      "price": 333.4,
-      "pct": 0.92
+      "pct": 0.47
     },
     {
       "ticker": "SWK",
       "sector": "산업재",
       "wr": -71.3,
       "price": 75.62,
-      "pct": -0.15
-    },
-    {
-      "ticker": "PPG",
-      "sector": "소재",
-      "wr": -69.6,
-      "price": 108.25,
-      "pct": 0.28
+      "pct": 0.0
     },
     {
       "ticker": "EMR",
@@ -82,18 +86,32 @@
       "pct": 0.12
     },
     {
-      "ticker": "NUE",
-      "sector": "소재",
-      "wr": -64.7,
-      "price": 169.47,
-      "pct": 1.82
+      "ticker": "IBM",
+      "sector": "기술",
+      "wr": -66.5,
+      "price": 253.33,
+      "pct": 0.13
+    },
+    {
+      "ticker": "AFL",
+      "sector": "금융",
+      "wr": -65.8,
+      "price": 110.18,
+      "pct": -0.08
     },
     {
       "ticker": "MKC",
       "sector": "필수소비재",
       "wr": -64.3,
       "price": 64.18,
-      "pct": -0.73
+      "pct": -0.11
+    },
+    {
+      "ticker": "SPGI",
+      "sector": "금융",
+      "wr": -62.1,
+      "price": 445.28,
+      "pct": 0.27
     }
   ],
   "holdings": [
@@ -103,10 +121,10 @@
       "shares": 0.0583,
       "avg_price_usd": 102.57,
       "current_price": 102.85,
-      "current_value_krw": 8806,
+      "current_value_krw": 8822,
       "current_value_usd": 6.0,
       "pnl_pct": 0.27,
-      "day_change_pct": -1.42,
+      "day_change_pct": -0.09,
       "wr": -50.5
     },
     {
@@ -115,7 +133,7 @@
       "shares": 0.0859,
       "avg_price_usd": 139.33,
       "current_price": 141.12,
-      "current_value_krw": 17804,
+      "current_value_krw": 17834,
       "current_value_usd": 12.12,
       "pnl_pct": 1.28,
       "day_change_pct": 0.12,
@@ -127,10 +145,10 @@
       "shares": 0.1585,
       "avg_price_usd": 75.48,
       "current_price": 75.62,
-      "current_value_krw": 17603,
+      "current_value_krw": 17633,
       "current_value_usd": 11.99,
       "pnl_pct": 0.19,
-      "day_change_pct": -0.15,
+      "day_change_pct": 0.0,
       "wr": -71.3
     },
     {
@@ -139,10 +157,10 @@
       "shares": 0.0412,
       "avg_price_usd": 145.27,
       "current_price": 145.24,
-      "current_value_krw": 8788,
+      "current_value_krw": 8803,
       "current_value_usd": 5.98,
       "pnl_pct": -0.02,
-      "day_change_pct": -1.1,
+      "day_change_pct": 1.38,
       "wr": -58.4
     },
     {
@@ -151,11 +169,11 @@
       "shares": 0.0544,
       "avg_price_usd": 109.85,
       "current_price": 110.18,
-      "current_value_krw": 8803,
+      "current_value_krw": 8818,
       "current_value_usd": 5.99,
       "pnl_pct": 0.3,
-      "day_change_pct": -1.62,
-      "wr": null
+      "day_change_pct": -0.08,
+      "wr": -65.8
     },
     {
       "ticker": "SPGI",
@@ -163,11 +181,11 @@
       "shares": 0.0132,
       "avg_price_usd": 450.83,
       "current_price": 445.28,
-      "current_value_krw": 8632,
+      "current_value_krw": 8647,
       "current_value_usd": 5.88,
       "pnl_pct": -1.23,
       "day_change_pct": 0.27,
-      "wr": null
+      "wr": -62.1
     },
     {
       "ticker": "AMP",
@@ -175,11 +193,11 @@
       "shares": 0.0258,
       "avg_price_usd": 462.68,
       "current_price": 461.48,
-      "current_value_krw": 17486,
+      "current_value_krw": 17516,
       "current_value_usd": 11.91,
       "pnl_pct": -0.26,
       "day_change_pct": -0.97,
-      "wr": null
+      "wr": -84.1
     },
     {
       "ticker": "NUE",
@@ -187,11 +205,11 @@
       "shares": 0.0354,
       "avg_price_usd": 168.73,
       "current_price": 169.47,
-      "current_value_krw": 8811,
+      "current_value_krw": 8826,
       "current_value_usd": 6.0,
       "pnl_pct": 0.44,
       "day_change_pct": 1.82,
-      "wr": -64.7
+      "wr": null
     },
     {
       "ticker": "LOW",
@@ -199,10 +217,10 @@
       "shares": 0.0715,
       "avg_price_usd": 250.74,
       "current_price": 250.22,
-      "current_value_krw": 26276,
+      "current_value_krw": 26321,
       "current_value_usd": 17.89,
       "pnl_pct": -0.21,
-      "day_change_pct": -0.71,
+      "day_change_pct": 0.4,
       "wr": null
     },
     {
@@ -211,10 +229,10 @@
       "shares": 0.1562,
       "avg_price_usd": 114.76,
       "current_price": 111.84,
-      "current_value_krw": 25657,
+      "current_value_krw": 25701,
       "current_value_usd": 17.47,
       "pnl_pct": -2.54,
-      "day_change_pct": -3.19,
+      "day_change_pct": -0.13,
       "wr": null
     },
     {
@@ -223,11 +241,11 @@
       "shares": 0.0233,
       "avg_price_usd": 256.77,
       "current_price": 253.33,
-      "current_value_krw": 8669,
+      "current_value_krw": 8684,
       "current_value_usd": 5.9,
       "pnl_pct": -1.34,
       "day_change_pct": 0.13,
-      "wr": null
+      "wr": -66.5
     },
     {
       "ticker": "TXN",
@@ -235,16 +253,16 @@
       "shares": 0.0307,
       "avg_price_usd": 194.81,
       "current_price": 196.2,
-      "current_value_krw": 8846,
+      "current_value_krw": 8862,
       "current_value_usd": 6.02,
       "pnl_pct": 0.71,
       "day_change_pct": 0.62,
-      "wr": null
+      "wr": -54.2
     }
   ],
   "portfolio_summary": {
     "total_value_usd": 113.15,
-    "total_value_krw": 166180,
+    "total_value_krw": 166466,
     "total_pnl_pct": -0.35
   },
   "benchmarks": {
