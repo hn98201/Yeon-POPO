@@ -182,51 +182,59 @@ def get_economic_indicators() -> dict:
 def calc_egg_stage(ind: dict) -> dict:
     score = 0.0
     
-    # 1. 금리 (기준금리)
+    # [1] 금리 (Fed Rate)
     fr = ind.get('fed_rate') or 0
-    if fr >= 5.0: score -= 3.0
-    elif fr >= 4.0: score -= 1.5
+    if fr >= 5.0: score -= 4.0
     elif fr <= 2.0: score += 2.0
     
-    # 2. 장단기 금리차
-    ts = ind.get('term_spread') or 0
-    if ts <= -0.5: score -= 3.0      # 강한 역전 = 침체
-    elif ts < 0: score -= 1.5
+    # [2] 장단기 금리차 (Spread)
+    ts = ind.get('spread') or 0
+    if ts < 0: score -= 3.5
     elif ts >= 0.5: score += 1.5
     
-    # 3. VIX
+    # [3] VIX (공포지수)
     vx = ind.get('vix') or 0
-    if vx >= 30: score -= 3.0
-    elif vx >= 20: score -= 1.0
+    if vx >= 25: score -= 2.5
     elif vx <= 15: score += 2.0
     
-    # 4. 실업률
+    # [4] M2 유동성 (M2 YoY) - 매우 중요
+    m2 = ind.get('m2_yoy') or 0
+    if m2 <= 0: score -= 3.0
+    elif m2 >= 5.0: score += 2.0
+    
+    # [5] 인플레이션 (CPI YoY)
+    cp = ind.get('cpi_yoy') or 0
+    if cp >= 4.0: score -= 3.0
+    elif cp <= 2.5: score += 1.5
+    
+    # [6] 하이일드 스프레드 (부도 위험)
+    hy = ind.get('hy_spread') or 0
+    if hy >= 4.5: score -= 3.0
+    elif hy <= 3.5: score += 1.5
+    
+    # [7] 실업률 (Unemployment)
     ur = ind.get('unemp') or 0
-    if ur >= 5.0: score -= 2.0
+    if ur >= 4.5: score -= 2.0
     elif ur <= 3.8: score += 1.0
     
-    # 5. 인플레이션 (CPI)
-    cp = ind.get('cpi') or 0
-    if cp >= 4.0: score -= 2.5
-    elif cp <= 2.0: score += 1.5
+    # [8] 소비자 심리 (PMI/Sentiment)
+    pmi = ind.get('pmi') or 0
+    if pmi <= 50: score -= 1.5
+    elif pmi >= 70: score += 1.0
     
-    # 6~8. 산업생산·소매판매·주택착공 (데이터만 있으면 긍정 가점)
-    for key in ['ind_prod', 'retail_sales', 'housing']:
-        if ind.get(key) is not None:
-            score += 0.5
-    
-    # 9. 하이일드 스프레드 (부도 위험)
-    hy = ind.get('high_yield') or 0
-    if hy >= 5.0: score -= 2.5       # 신용 경색
-    elif hy <= 3.0: score += 2.0
-    
-    # 단계 결정 (총점 기준)
-    if score <= -7: stage = 1
-    elif score <= -4: stage = 2
-    elif score <= 0: stage = 3
-    elif score <= 4: stage = 4
-    elif score <= 7: stage = 5
-    else: stage = 6
+    # [9] 신규 실업수당 청구 (Claims) - 단기 고용 지표
+    cl = ind.get('claims') or 0
+    # 최근 평균 대비 급증 시 감점 (예시 기준치)
+    if cl >= 250000: score -= 1.0 
+    elif cl <= 200000: score += 0.5
+
+    # ── 단계 결정 (총점 기준)
+    if score <= -9: stage = 1        # 하락 초입
+    elif score <= -4: stage = 2      # 하락 본격
+    elif score <= 1: stage = 3       # 상승 초입
+    elif score <= 5: stage = 4       # 상승 본격
+    elif score <= 9: stage = 5       # 과열 초입
+    else: stage = 6                  # 과열 본격
     
     descs = {
         1: "① 하락 초입 (A)", 2: "② 하락 본격 (B)", 3: "③ 상승 초입 (C)",
