@@ -120,68 +120,100 @@ def get_benchmark_data() -> dict:
 # ══════════════════════════════════════════
 # 경제 지표 및 달걀 단계 (FRED API 크롤링)
 # ══════════════════════════════════════════
-# 9개 지표 야후 파이낸스 티커 매핑
+# ✅ 9가지 핵심 지표 (모두 yfinance 지원)
 ECON_TICKERS = {
-    'fed_rate': '^IRX',           # 기준금리 대용 (미 국채 13주물)
-    'term_spread': '10Y2Y=X',     # 장단기 금리차 (10Y-2Y)
-    'vix': '^VIX',                # 공포지수
-    'unemp': 'UNRATE',            # 실업률
-    'cpi': 'CPIAUCSL',            # 인플레이션 (소비자물가)
-    'ind_prod': 'INDPRO',         # 산업생산
-    'retail_sales': 'RSXFS',      # 소매판매
-    'housing': 'HOUST',           # 주택착공
-    'high_yield': 'HYG'           # 하이일드 (기업 부도 위험)
+    'fed_rate': 'FEDFUNDS',       # 1. 기준금리
+    'term_spread': 'T10Y2Y',      # 2. 장단기 금리차
+    'vix': '^VIX',                # 3. VIX 공포지수
+    'unemp': 'UNRATE',            # 4. 실업률
+    'cpi': 'CPIAUCSL',            # 5. 인플레이션
+    'ind_prod': 'INDPRO',         # 6. 산업생산
+    'retail_sales': 'RSXFS',      # 7. 소매판매
+    'housing': 'HOUST',           # 8. 주택착공건수
+    'high_yield': 'BAMLH0A0HYM2', # 9. 하이일드 스프레드 (부도 위험)
 }
 
 def get_economic_indicators() -> dict:
     ind = {}
+    print("1. 경제 지표 조회 중... (9개 전부)")
     for name, ticker in ECON_TICKERS.items():
         try:
-            # ✅ yfinance를 사용하여 GitHub Actions에서도 차단 없이 수집
-            val = yf.Ticker(ticker).fast_info.last_price
-            ind[name] = val
-            time.sleep(0.2) 
-        except:
+            if ticker == '^VIX':
+                val = yf.Ticker(ticker).fast_info.last_price
+            else:
+                # FRED 지표는 .download()로 최신값 가져오기
+                df = yf.download(ticker, period="1mo", progress=False)
+                if not df.empty and 'Close' in df.columns:
+                    val = float(df['Close'].iloc[-1])
+                else:
+                    val = None
+            ind[name] = round(val, 2) if val is not None else None
+            time.sleep(0.25)
+            print(f"  ✅ {name}: {ind[name]}")
+        except Exception as e:
+            print(f"  ❌ {name} ({ticker}) 실패: {e}")
             ind[name] = None
     return ind
 
 def calc_egg_stage(ind: dict) -> dict:
-    score = 0
+    score = 0.0
     
-    # 1. 금리 (4.5% 이상 고금리면 점수 차감)
-    if (ind.get('fed_rate') or 0) > 4.5: score -= 2
-    elif (ind.get('fed_rate') or 0) < 2.5: score += 2
+    # 1. 금리 (기준금리)
+    fr = ind.get('fed_rate') or 0
+    if fr >= 5.0: score -= 3.0
+    elif fr >= 4.0: score -= 1.5
+    elif fr <= 2.0: score += 2.0
     
-    # 2. 장단기 금리차 (정상화 시 상승 점수)
-    if (ind.get('term_spread') or 0) > 0: score += 2
-    else: score -= 2
+    # 2. 장단기 금리차
+    ts = ind.get('term_spread') or 0
+    if ts <= -0.5: score -= 3.0      # 강한 역전 = 침체
+    elif ts < 0: score -= 1.5
+    elif ts >= 0.5: score += 1.5
     
-    # 3. VIX (낮을수록 시장 안정)
-    if (ind.get('vix') or 0) < 20: score += 1
-    else: score -= 1
-
-    # 4. 기타 경기지표 가중치 합산
-    # 인플레이션, 실업률, 생산지표 등이 존재하면 가점
-    for m in ['unemp', 'cpi', 'ind_prod', 'retail_sales', 'housing', 'high_yield']:
-        if ind.get(m): score += 0.5
-
-    # 점수 기반 단계 매핑 (총점에 따라 1~6단계 배분)
-    if score <= -3: stage = 1
-    elif score <= -1: stage = 2
-    elif score <= 2: stage = 3
+    # 3. VIX
+    vx = ind.get('vix') or 0
+    if vx >= 30: score -= 3.0
+    elif vx >= 20: score -= 1.0
+    elif vx <= 15: score += 2.0
+    
+    # 4. 실업률
+    ur = ind.get('unemp') or 0
+    if ur >= 5.0: score -= 2.0
+    elif ur <= 3.8: score += 1.0
+    
+    # 5. 인플레이션 (CPI)
+    cp = ind.get('cpi') or 0
+    if cp >= 4.0: score -= 2.5
+    elif cp <= 2.0: score += 1.5
+    
+    # 6~8. 산업생산·소매판매·주택착공 (데이터만 있으면 긍정 가점)
+    for key in ['ind_prod', 'retail_sales', 'housing']:
+        if ind.get(key) is not None:
+            score += 0.5
+    
+    # 9. 하이일드 스프레드 (부도 위험)
+    hy = ind.get('high_yield') or 0
+    if hy >= 5.0: score -= 2.5       # 신용 경색
+    elif hy <= 3.0: score += 2.0
+    
+    # 단계 결정 (총점 기준)
+    if score <= -7: stage = 1
+    elif score <= -4: stage = 2
+    elif score <= 0: stage = 3
     elif score <= 4: stage = 4
-    elif score <= 6: stage = 5
+    elif score <= 7: stage = 5
     else: stage = 6
     
     descs = {
         1: "① 하락 초입 (A)", 2: "② 하락 본격 (B)", 3: "③ 상승 초입 (C)",
         4: "④ 상승 본격 (D)", 5: "⑤ 과열 초입 (E)", 6: "⑥ 과열 본격 (F)"
     }
+    
     return {
-        'stage': stage, 
-        'score': round(score, 1), 
-        'desc': descs.get(stage, "데이터 분석 중"),
-        'indicators': ind # ✅ index.html 연동을 위해 키 이름을 'all_metrics'에서 'indicators'로 완벽 일치시켰습니다.
+        'stage': stage,
+        'score': round(score, 1),
+        'desc': descs.get(stage, "분석 중"),
+        'indicators': ind
     }
 
 # ══════════════════════════════════════════
