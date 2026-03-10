@@ -181,7 +181,7 @@ def calc_egg_stage(ind: dict) -> dict:
         'stage': stage, 
         'score': round(score, 1), 
         'desc': descs.get(stage, "데이터 분석 중"),
-        'all_metrics': ind # 9개 지표 전체 데이터를 prices.json에 저장
+        'indicators': ind # ✅ index.html 연동을 위해 키 이름을 'all_metrics'에서 'indicators'로 완벽 일치시켰습니다.
     }
 
 # ══════════════════════════════════════════
@@ -274,7 +274,8 @@ def main():
     holdings = []
     try:
         if os.path.exists('portfolio.json'):
-            with open('portfolio.json', 'r') as f:
+            # ✅ 한글 깨짐 및 에러 방지를 위해 encoding='utf-8' 명시
+            with open('portfolio.json', 'r', encoding='utf-8') as f:
                 pf = json.load(f)
             
             for h in pf.get('holdings', []):
@@ -333,6 +334,7 @@ def main():
         }
     }
 
+    # ✅ 한글 깨짐 방지를 위해 encoding='utf-8' 보장
     with open('prices.json', 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     print("  -> prices.json 성공적으로 저장됨")
