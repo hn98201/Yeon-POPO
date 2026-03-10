@@ -156,22 +156,21 @@ def get_economic_indicators() -> dict:
                 df.columns = df.columns.str.strip().str.upper()
                 val_col = df.columns[1]
                 
-                # '.' 표시된 데이터 결측치 처리
-                df[val_col] = pd.to_numeric(df[val_col], errors='coerce')
-                series = df[val_col].dropna()
+                # ✅ '.' (결측치)를 확실하게 숫자로 바꾼 후 제거 (errors='coerce'가 핵심)
+                series = pd.to_numeric(df[val_col], errors='coerce').dropna()
 
                 if series.empty:
                     raise ValueError(f"{name} 데이터 없음")
 
-                # ✅ M2와 CPI는 '현재 값'이 아니라 '전년 대비 증가율(YoY)'이 핵심임
+                # ✅ M2와 CPI 전년 대비 증가율(YoY) 계산
                 if name in ['m2_yoy', 'cpi_yoy']:
                     if len(series) >= 13:
                         cur_val = series.iloc[-1]
-                        prev_val = series.iloc[-13] # 12개월 전 데이터
+                        prev_val = series.iloc[-13] 
                         yoy_rate = ((cur_val / prev_val) - 1) * 100
                         ind[name] = round(yoy_rate, 2)
                     else:
-                        ind[name] = round(series.iloc[-1], 2) # 데이터 부족 시 현재값
+                        ind[name] = round(series.iloc[-1], 2)
                 else:
                     ind[name] = round(series.iloc[-1], 2)
             
