@@ -120,45 +120,69 @@ def get_benchmark_data() -> dict:
 # ══════════════════════════════════════════
 # 경제 지표 및 달걀 단계 (FRED API 크롤링)
 # ══════════════════════════════════════════
+# 9개 지표 야후 파이낸스 티커 매핑
+ECON_TICKERS = {
+    'fed_rate': '^IRX',           # 기준금리 대용 (미 국채 13주물)
+    'term_spread': '10Y2Y=X',     # 장단기 금리차 (10Y-2Y)
+    'vix': '^VIX',                # 공포지수
+    'unemp': 'UNRATE',            # 실업률
+    'cpi': 'CPIAUCSL',            # 인플레이션 (소비자물가)
+    'ind_prod': 'INDPRO',         # 산업생산
+    'retail_sales': 'RSXFS',      # 소매판매
+    'housing': 'HOUST',           # 주택착공
+    'high_yield': 'HYG'           # 하이일드 (기업 부도 위험)
+}
+
 def get_economic_indicators() -> dict:
     ind = {}
-    def parse_fred_latest(url: str):
+    for name, ticker in ECON_TICKERS.items():
         try:
-            r = requests.get(url, timeout=10)
-            lines = [line.strip() for line in r.text.strip().split('\n') if ',' in line]
-            for line in reversed(lines[1:]):
-                parts = line.split(',')
-                if len(parts) >= 2:
-                    val = parts[1].strip()
-                    if val and val != '.':
-                        return float(val)
-        except: pass
-        return None
-
-    ind['fed_rate'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=FEDFUNDS')
-    ind['spread'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y')
-    ind['vix'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS')
-    ind['unemp'] = parse_fred_latest('https://fred.stlouisfed.org/graph/fredgraph.csv?id=UNRATE')
+            # ✅ yfinance를 사용하여 GitHub Actions에서도 차단 없이 수집
+            val = yf.Ticker(ticker).fast_info.last_price
+            ind[name] = val
+            time.sleep(0.2) 
+        except:
+            ind[name] = None
     return ind
 
 def calc_egg_stage(ind: dict) -> dict:
-    """간이 경제 지표 스코어링"""
-    spread = ind.get('spread', 0)
-    fed_rate = ind.get('fed_rate', 5.0)
+    score = 0
     
-    stage = 3 # 기본값
-    if fed_rate > 4.5 and spread < 0: stage = 6
-    elif fed_rate > 4.5 and spread >= 0: stage = 5
-    elif fed_rate <= 4.5 and spread >= 1.0: stage = 4
-    elif fed_rate <= 3.0: stage = 3
-    elif spread < -0.5: stage = 2
-    else: stage = 1
+    # 1. 금리 (4.5% 이상 고금리면 점수 차감)
+    if (ind.get('fed_rate') or 0) > 4.5: score -= 2
+    elif (ind.get('fed_rate') or 0) < 2.5: score += 2
+    
+    # 2. 장단기 금리차 (정상화 시 상승 점수)
+    if (ind.get('term_spread') or 0) > 0: score += 2
+    else: score -= 2
+    
+    # 3. VIX (낮을수록 시장 안정)
+    if (ind.get('vix') or 0) < 20: score += 1
+    else: score -= 1
+
+    # 4. 기타 경기지표 가중치 합산
+    # 인플레이션, 실업률, 생산지표 등이 존재하면 가점
+    for m in ['unemp', 'cpi', 'ind_prod', 'retail_sales', 'housing', 'high_yield']:
+        if ind.get(m): score += 0.5
+
+    # 점수 기반 단계 매핑 (총점에 따라 1~6단계 배분)
+    if score <= -3: stage = 1
+    elif score <= -1: stage = 2
+    elif score <= 2: stage = 3
+    elif score <= 4: stage = 4
+    elif score <= 6: stage = 5
+    else: stage = 6
     
     descs = {
-        1: "① 하락 초입", 2: "② 하락 본격", 3: "③ 상승 초입",
-        4: "④ 상승 본격", 5: "⑤ 과열 초입", 6: "⑥ 과열 본격"
+        1: "① 하락 초입 (A)", 2: "② 하락 본격 (B)", 3: "③ 상승 초입 (C)",
+        4: "④ 상승 본격 (D)", 5: "⑤ 과열 초입 (E)", 6: "⑥ 과열 본격 (F)"
     }
-    return {'stage': stage, 'score': round(stage * 1.5, 1), 'desc': descs.get(stage, "알 수 없음")}
+    return {
+        'stage': stage, 
+        'score': round(score, 1), 
+        'desc': descs.get(stage, "데이터 분석 중"),
+        'all_metrics': ind # 9개 지표 전체 데이터를 prices.json에 저장
+    }
 
 # ══════════════════════════════════════════
 # 포트폴리오 유틸리티
