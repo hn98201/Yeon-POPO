@@ -382,7 +382,24 @@ def main():
     print("6. 벤치마크 데이터 생성 중...")
     benchmarks = get_benchmark_data()
 
+    # ── 추가할 부분: JSON 저장 에러 방지용 함수
+    def handle_serialization(obj):
+        if hasattr(obj, 'tolist'): # 넘파이/판다스 배열 대응
+            return obj.tolist()
+        if hasattr(obj, 'item'):   # 넘파이/판다스 단일 숫자(int64 등) 대응
+            return obj.item()
+        return obj
+
     print("7. prices.json 저장 중...")
+
+    # ── 추가: JSON 저장 에러 방지용 함수 (판다스/넘파이 데이터 타입 변환)
+    def handle_serialization(obj):
+        if hasattr(obj, 'tolist'): # 넘파이/판다스 배열 대응
+            return obj.tolist()
+        if hasattr(obj, 'item'):   # 넘파이/판다스 단일 숫자(int64 등) 대응
+            return obj.item()
+        return obj
+
     output = {
         'updated_at':       now_kst.strftime('%Y-%m-%d %H:%M KST'),
         'fx_rate':          fx_rate,
@@ -400,18 +417,23 @@ def main():
         }
     }
 
-    # ✅ 한글 깨짐 방지를 위해 encoding='utf-8' 보장
+    # ✅ 한글 깨짐 방지를 위해 encoding='utf-8' 및 데이터 직렬화 옵션 적용
     with open('prices.json', 'w', encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+        # default=handle_serialization 을 반드시 추가해야 int64 에러가 나지 않습니다.
+        json.dump(output, f, ensure_ascii=False, indent=2, default=handle_serialization)
+    
     print("  -> prices.json 성공적으로 저장됨")
 
+    # 8. 텔레그램 메시지 전송
     if active_signals:
         msg = build_signal_message(active_signals, fx_rate, months)
         send_telegram(msg)
     else:
+        # 매일 오전 8~10시 사이에만 요약 보고 전송 (불필요한 알림 방지)
         if 8 <= now_kst.hour <= 10:
             msg = (f"📊 달걀이론 포트폴리오 업데이트\n"
                    f"달걀 {egg['stage']}단계 | {egg['desc']}\n"
+                   f"종합 점수: {egg['score']}점\n"
                    f"현재 매수 신호 없음 (WR > {WR_THRESHOLD})")
             send_telegram(msg)
 
