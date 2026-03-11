@@ -1,31 +1,42 @@
 {
-  "updated_at": "2026-03-11 09:58 KST",
-  "fx_rate": 1467.68,
+  "updated_at": "2026-03-11 23:42 KST",
+  "fx_rate": 1472.56,
   "egg": {
-    "stage": 4,
-    "score": 3.0,
-    "desc": "④ 상승 본격 (D)",
+    "stage": 3,
+    "score": 0.5,
+    "desc": "③ 상승 초입 (C)",
     "indicators": {
       "fed_rate": 3.64,
       "spread": 0.58,
-      "vix": 24.93,
+      "vix": 25.22,
       "unemp": 4.4,
-      "cpi_yoy": 2.83,
+      "cpi_yoy": 2.66,
       "m2_yoy": 4.29,
       "pmi": 56.4,
       "claims": 213000,
-      "hy_spread": 3.19
+      "hy_spread": 3.06
     }
   },
   "current_30": [
-    "JNJ",
-    "ABT",
-    "BDX",
-    "ABBV",
-    "CAH",
-    "MDT",
-    "LOW",
-    "GPC",
+    "CAT",
+    "EMR",
+    "ITW",
+    "DOV",
+    "GWW",
+    "SWK",
+    "CHRW",
+    "EXPD",
+    "CTAS",
+    "ROL",
+    "FAST",
+    "NDSN",
+    "CB",
+    "CINF",
+    "AFL",
+    "BEN",
+    "SPGI",
+    "AMP",
+    "AON",
     "IBM",
     "TXN",
     "KO",
@@ -36,89 +47,99 @@
     "MKC",
     "GIS",
     "SYY",
-    "WMT",
-    "TGT",
-    "HRL",
-    "CLX",
-    "ADM",
-    "CAT",
-    "EMR",
-    "ITW",
-    "DOV",
-    "GWW",
-    "SWK",
-    "CHRW"
+    "WMT"
   ],
   "active_signals": [
     {
-      "ticker": "GPC",
-      "sector": "경기소비재",
-      "wr": -100.0,
-      "price": 108.96,
-      "pct": -2.71
-    },
-    {
       "ticker": "GIS",
       "sector": "필수소비재",
-      "wr": -98.9,
-      "price": 42.28,
-      "pct": -2.85
+      "wr": -99.5,
+      "price": 40.83,
+      "pct": -3.82
     },
     {
-      "ticker": "MDT",
-      "sector": "헬스케어",
-      "wr": -94.7,
-      "price": 89.89,
-      "pct": -1.07
-    },
-    {
-      "ticker": "SWK",
-      "sector": "산업재",
-      "wr": -86.6,
-      "price": 74.13,
-      "pct": -1.97
-    },
-    {
-      "ticker": "ABT",
-      "sector": "헬스케어",
-      "wr": -77.7,
-      "price": 110.55,
-      "pct": -1.29
-    },
-    {
-      "ticker": "LOW",
-      "sector": "경기소비재",
-      "wr": -76.8,
-      "price": 251.11,
-      "pct": 0.75
-    },
-    {
-      "ticker": "EMR",
-      "sector": "산업재",
-      "wr": -70.7,
-      "price": 140.1,
-      "pct": -0.6
+      "ticker": "AMP",
+      "sector": "금융",
+      "wr": -95.4,
+      "price": 449.79,
+      "pct": -1.4
     },
     {
       "ticker": "MKC",
       "sector": "필수소비재",
-      "wr": -70.5,
-      "price": 63.39,
-      "pct": -1.34
+      "wr": -95.0,
+      "price": 60.26,
+      "pct": -5.7
+    },
+    {
+      "ticker": "ROL",
+      "sector": "산업재",
+      "wr": -93.2,
+      "price": 55.92,
+      "pct": -0.64
+    },
+    {
+      "ticker": "SWK",
+      "sector": "산업재",
+      "wr": -85.8,
+      "price": 73.5,
+      "pct": -0.22
+    },
+    {
+      "ticker": "EMR",
+      "sector": "산업재",
+      "wr": -72.2,
+      "price": 139.59,
+      "pct": -0.35
+    },
+    {
+      "ticker": "SPGI",
+      "sector": "금융",
+      "wr": -71.7,
+      "price": 428.94,
+      "pct": -1.55
     },
     {
       "ticker": "IBM",
       "sector": "기술",
-      "wr": -69.7,
-      "price": 250.2,
-      "pct": -1.1
+      "wr": -70.8,
+      "price": 249.16,
+      "pct": -0.33
     },
     {
-      "ticker": "HRL",
+      "ticker": "AON",
+      "sector": "금융",
+      "wr": -69.9,
+      "price": 320.83,
+      "pct": -0.04
+    },
+    {
+      "ticker": "AFL",
+      "sector": "금융",
+      "wr": -69.4,
+      "price": 109.72,
+      "pct": 0.38
+    },
+    {
+      "ticker": "KMB",
       "sector": "필수소비재",
-      "wr": -67.6,
-      "price": 23.34,
-      "pct": -2.52
+      "wr": -69.1,
+      "price": 99.84,
+      "pct": -1.97
+    },
+    {
+      "ticker": "EXPD",
+      "sector": "산업재",
+      "wr": -68.6,
+      "price": 141.4,
+      "pct": 0.02
+    },
+    {
+      "ticker": "BEN",
+      "sector": "금융",
+      "wr": -60.0,
+      "price": 24.8,
+      "pct": -2.03
     }
   ],
   "holdings": [
@@ -127,95 +148,95 @@
       "sector": "필수소비재",
       "shares": 0.0583,
       "avg_price_usd": 102.57,
-      "current_price": 101.71,
-      "current_value_krw": 8703,
-      "current_value_usd": 5.93,
-      "pnl_pct": -0.84,
-      "day_change_pct": -1.19,
-      "wr": -56.9
+      "current_price": 99.84,
+      "current_value_krw": 8571,
+      "current_value_usd": 5.82,
+      "pnl_pct": -2.66,
+      "day_change_pct": -1.97,
+      "wr": -69.1
     },
     {
       "ticker": "EMR",
       "sector": "산업재",
       "shares": 0.0859,
       "avg_price_usd": 139.33,
-      "current_price": 140.1,
-      "current_value_krw": 17663,
-      "current_value_usd": 12.03,
-      "pnl_pct": 0.55,
-      "day_change_pct": -0.6,
-      "wr": -70.7
+      "current_price": 139.59,
+      "current_value_krw": 17657,
+      "current_value_usd": 11.99,
+      "pnl_pct": 0.19,
+      "day_change_pct": -0.35,
+      "wr": -72.2
     },
     {
       "ticker": "SWK",
       "sector": "산업재",
       "shares": 0.1585,
       "avg_price_usd": 75.48,
-      "current_price": 74.13,
-      "current_value_krw": 17245,
-      "current_value_usd": 11.75,
-      "pnl_pct": -1.79,
-      "day_change_pct": -1.97,
-      "wr": -86.6
+      "current_price": 73.5,
+      "current_value_krw": 17155,
+      "current_value_usd": 11.65,
+      "pnl_pct": -2.62,
+      "day_change_pct": -0.22,
+      "wr": -85.8
     },
     {
       "ticker": "EXPD",
       "sector": "산업재",
       "shares": 0.0412,
       "avg_price_usd": 145.27,
-      "current_price": 141.37,
-      "current_value_krw": 8548,
-      "current_value_usd": 5.82,
-      "pnl_pct": -2.68,
-      "day_change_pct": -1.32,
-      "wr": null
+      "current_price": 141.4,
+      "current_value_krw": 8579,
+      "current_value_usd": 5.83,
+      "pnl_pct": -2.66,
+      "day_change_pct": 0.02,
+      "wr": -68.6
     },
     {
       "ticker": "AFL",
       "sector": "금융",
       "shares": 0.0544,
       "avg_price_usd": 109.85,
-      "current_price": 110.3,
-      "current_value_krw": 8807,
-      "current_value_usd": 6.0,
-      "pnl_pct": 0.41,
-      "day_change_pct": 0.03,
-      "wr": null
+      "current_price": 109.72,
+      "current_value_krw": 8789,
+      "current_value_usd": 5.97,
+      "pnl_pct": -0.12,
+      "day_change_pct": 0.38,
+      "wr": -69.4
     },
     {
       "ticker": "SPGI",
       "sector": "금융",
       "shares": 0.0132,
       "avg_price_usd": 450.83,
-      "current_price": 435.44,
-      "current_value_krw": 8436,
-      "current_value_usd": 5.75,
-      "pnl_pct": -3.41,
-      "day_change_pct": -1.95,
-      "wr": null
+      "current_price": 428.94,
+      "current_value_krw": 8338,
+      "current_value_usd": 5.66,
+      "pnl_pct": -4.86,
+      "day_change_pct": -1.55,
+      "wr": -71.7
     },
     {
       "ticker": "AMP",
       "sector": "금융",
       "shares": 0.0258,
       "avg_price_usd": 462.68,
-      "current_price": 456.16,
-      "current_value_krw": 17273,
-      "current_value_usd": 11.77,
-      "pnl_pct": -1.41,
-      "day_change_pct": -1.11,
-      "wr": null
+      "current_price": 449.79,
+      "current_value_krw": 17088,
+      "current_value_usd": 11.6,
+      "pnl_pct": -2.79,
+      "day_change_pct": -1.4,
+      "wr": -95.4
     },
     {
       "ticker": "NUE",
       "sector": "소재",
       "shares": 0.0354,
       "avg_price_usd": 168.73,
-      "current_price": 170.43,
-      "current_value_krw": 8855,
-      "current_value_usd": 6.03,
-      "pnl_pct": 1.01,
-      "day_change_pct": 2.4,
+      "current_price": 172.62,
+      "current_value_krw": 8998,
+      "current_value_usd": 6.11,
+      "pnl_pct": 2.31,
+      "day_change_pct": -0.1,
       "wr": null
     },
     {
@@ -223,54 +244,54 @@
       "sector": "경기소비재",
       "shares": 0.0715,
       "avg_price_usd": 250.74,
-      "current_price": 251.11,
-      "current_value_krw": 26351,
-      "current_value_usd": 17.95,
-      "pnl_pct": 0.15,
-      "day_change_pct": 0.75,
-      "wr": -76.8
+      "current_price": 249.62,
+      "current_value_krw": 26282,
+      "current_value_usd": 17.85,
+      "pnl_pct": -0.45,
+      "day_change_pct": -0.8,
+      "wr": null
     },
     {
       "ticker": "GPC",
       "sector": "경기소비재",
       "shares": 0.1562,
       "avg_price_usd": 114.76,
-      "current_price": 108.96,
-      "current_value_krw": 24979,
-      "current_value_usd": 17.02,
-      "pnl_pct": -5.05,
-      "day_change_pct": -2.71,
-      "wr": -100.0
+      "current_price": 113.41,
+      "current_value_krw": 26086,
+      "current_value_usd": 17.71,
+      "pnl_pct": -1.18,
+      "day_change_pct": 3.81,
+      "wr": null
     },
     {
       "ticker": "IBM",
       "sector": "기술",
       "shares": 0.0233,
       "avg_price_usd": 256.77,
-      "current_price": 250.2,
-      "current_value_krw": 8556,
-      "current_value_usd": 5.83,
-      "pnl_pct": -2.56,
-      "day_change_pct": -1.1,
-      "wr": -69.7
+      "current_price": 249.16,
+      "current_value_krw": 8549,
+      "current_value_usd": 5.81,
+      "pnl_pct": -2.96,
+      "day_change_pct": -0.33,
+      "wr": -70.8
     },
     {
       "ticker": "TXN",
       "sector": "기술",
       "shares": 0.0307,
       "avg_price_usd": 194.81,
-      "current_price": 197.46,
-      "current_value_krw": 8897,
-      "current_value_usd": 6.06,
-      "pnl_pct": 1.36,
-      "day_change_pct": 1.26,
-      "wr": -58.5
+      "current_price": 199.57,
+      "current_value_krw": 9022,
+      "current_value_usd": 6.13,
+      "pnl_pct": 2.44,
+      "day_change_pct": 1.04,
+      "wr": -54.9
     }
   ],
   "portfolio_summary": {
-    "total_value_usd": 111.94,
-    "total_value_krw": 164292,
-    "total_pnl_pct": -1.42
+    "total_value_usd": 112.13,
+    "total_value_krw": 165118,
+    "total_pnl_pct": -1.25
   },
   "benchmarks": {
     "VOO": {
@@ -525,7 +546,8 @@
         "2026-03-05",
         "2026-03-06",
         "2026-03-09",
-        "2026-03-10"
+        "2026-03-10",
+        "2026-03-11"
       ],
       "pct": [
         0.0,
@@ -778,7 +800,8 @@
         24.1,
         22.45,
         23.51,
-        23.29
+        23.29,
+        23.33
       ]
     },
     "QQQ": {
@@ -1033,7 +1056,8 @@
         "2026-03-05",
         "2026-03-06",
         "2026-03-09",
-        "2026-03-10"
+        "2026-03-10",
+        "2026-03-11"
       ],
       "pct": [
         0.0,
@@ -1286,7 +1310,8 @@
         29.77,
         27.82,
         29.53,
-        29.53
+        29.53,
+        29.77
       ]
     },
     "NOBL": {
@@ -1541,7 +1566,8 @@
         "2026-03-05",
         "2026-03-06",
         "2026-03-09",
-        "2026-03-10"
+        "2026-03-10",
+        "2026-03-11"
       ],
       "pct": [
         0.0,
@@ -1794,7 +1820,8 @@
         11.43,
         10.57,
         10.43,
-        9.37
+        9.37,
+        8.77
       ]
     }
   },
