@@ -54,14 +54,14 @@ STAGE_SECTORS = {
 # WR 단계 정의
 def wr_level(wr):
     """WR 값을 단계로 변환 (0=신호없음, 1=약매수, 2=중매수, 3=강매수)"""
-    if wr is None or wr > -60:  return 0
+    if wr is None or wr > -50:  return 0
     if wr > -70:                return 1  # -50 ~ -70: 약매수
     if wr > -85:                return 2  # -70 ~ -85: 중매수
     return 3                             # -85 이하: 강매수
 
 WR_LEVEL_LABEL = {
     0: None,
-    1: '🟢 약매수 (WR ≤ -60, 30%)',
+    1: '🟢 약매수 (WR ≤ -50, 30%)',
     2: '🟡 중매수 (WR ≤ -70, 40%)',
     3: '🔴 강매수 (WR ≤ -85, 30%)',
 }
@@ -262,12 +262,16 @@ def get_economic_indicators() -> dict:
         if cache.get(key) is not None: return cache[key]
         return default
 
-    # ① VIX
-    try:
-        ind['vix'] = round(yf.Ticker('^VIX').fast_info.last_price, 2)
-    except:
-        ind['vix'] = co('vix', 18.0)
-    print(f"    vix         = {ind['vix']}")
+    # ① VIX (수동 override 우선)
+    if ov.get('vix') is not None:
+        ind['vix'] = ov['vix']
+        print(f"    vix         = {ind['vix']} (수동입력)")
+    else:
+        try:
+            ind['vix'] = round(yf.Ticker('^VIX').fast_info.last_price, 2)
+        except:
+            ind['vix'] = co('vix', 18.0)
+        print(f"    vix         = {ind['vix']}")
 
     # ② 기준금리 (^IRX)
     try:
@@ -286,44 +290,56 @@ def get_economic_indicators() -> dict:
 
     time.sleep(0.5)
 
-    # ④ CPI YoY (BLS)
-    print("    [BLS] CPI 조회...")
-    bls_cpi = bls_fetch('CUUR0000SA0')
-    if bls_cpi:
-        try:
-            rows = sorted(
-                [x for x in bls_cpi if x['period'].startswith('M') and x['period'] != 'M13'],
-                key=lambda x: (x['year'], x['period']), reverse=True
-            )
-            if len(rows) >= 13:
-                ind['cpi_yoy'] = round((float(rows[0]['value'])/float(rows[12]['value'])-1)*100, 2)
-            else:
+    # ④ CPI YoY (수동 override 우선, 없으면 BLS)
+    if ov.get('cpi_yoy') is not None:
+        ind['cpi_yoy'] = ov['cpi_yoy']
+        print(f"    cpi_yoy     = {ind['cpi_yoy']}% (수동입력)")
+    else:
+        print("    [BLS] CPI 조회...")
+        bls_cpi = bls_fetch('CUUR0000SA0')
+        if bls_cpi:
+            try:
+                rows = sorted(
+                    [x for x in bls_cpi if x['period'].startswith('M') and x['period'] != 'M13'],
+                    key=lambda x: (x['year'], x['period']), reverse=True
+                )
+                if len(rows) >= 13:
+                    ind['cpi_yoy'] = round((float(rows[0]['value'])/float(rows[12]['value'])-1)*100, 2)
+                else:
+                    ind['cpi_yoy'] = co('cpi_yoy')
+            except:
                 ind['cpi_yoy'] = co('cpi_yoy')
-        except:
+        else:
             ind['cpi_yoy'] = co('cpi_yoy')
-    else:
-        ind['cpi_yoy'] = co('cpi_yoy')
-    print(f"    cpi_yoy     = {ind['cpi_yoy']}%")
+        print(f"    cpi_yoy     = {ind['cpi_yoy']}%")
 
-    # ⑤ 실업률 (BLS)
-    print("    [BLS] 실업률 조회...")
-    bls_unemp = bls_fetch('LNS14000000')
-    if bls_unemp:
-        try:
-            rows = sorted(
-                [x for x in bls_unemp if x['period'].startswith('M') and x['period'] != 'M13'],
-                key=lambda x: (x['year'], x['period']), reverse=True
-            )
-            ind['unemp'] = float(rows[0]['value'])
-        except:
+    # ⑤ 실업률 (수동 override 우선, 없으면 BLS)
+    if ov.get('unemp') is not None:
+        ind['unemp'] = ov['unemp']
+        print(f"    unemp       = {ind['unemp']}% (수동입력)")
+    else:
+        print("    [BLS] 실업률 조회...")
+        bls_unemp = bls_fetch('LNS14000000')
+        if bls_unemp:
+            try:
+                rows = sorted(
+                    [x for x in bls_unemp if x['period'].startswith('M') and x['period'] != 'M13'],
+                    key=lambda x: (x['year'], x['period']), reverse=True
+                )
+                ind['unemp'] = float(rows[0]['value'])
+            except:
+                ind['unemp'] = co('unemp')
+        else:
             ind['unemp'] = co('unemp')
-    else:
-        ind['unemp'] = co('unemp')
-    print(f"    unemp       = {ind['unemp']}%")
+        print(f"    unemp       = {ind['unemp']}%")
 
-    # ⑥ M2 (수동입력 or 캐시)
-    ind['m2_yoy'] = co('m2_yoy', 3.5)
-    print(f"    m2_yoy      = {ind['m2_yoy']}% ({'수동' if ov.get('m2_yoy') else '캐시'})")
+    # ⑥ M2 (수동입력 YoY or 히스토리 기반 자동계산 or 캐시)
+    if ov.get('m2_yoy') is not None:
+        ind['m2_yoy'] = ov['m2_yoy']
+        print(f"    m2_yoy      = {ind['m2_yoy']}% (수동입력/자동계산)")
+    else:
+        ind['m2_yoy'] = co('m2_yoy', 3.5)
+        print(f"    m2_yoy      = {ind['m2_yoy']}% (캐시)")
 
     # ⑦ HY 스프레드 (수동입력 or VIX 추정)
     if ov.get('hy_spread') is not None:
@@ -336,18 +352,22 @@ def get_economic_indicators() -> dict:
         )
     print(f"    hy_spread   = {ind['hy_spread']}% ({'수동' if ov.get('hy_spread') else 'VIX추정'})")
 
-    # ⑧ 소비자심리 (UMICH)
-    try:
-        r = requests.get(
-            "https://data.sca.isr.umich.edu/get-chart.php?r=1&t=tbmics&f=csv",
-            timeout=10, headers={'User-Agent': 'Mozilla/5.0'}
-        )
-        lines = [l.strip() for l in r.text.strip().split('\n') if l.strip()]
-        val = float(lines[-1].split(',')[-1])
-        ind['pmi'] = round(val, 1) if 20 < val < 130 else co('pmi', 65.0)
-    except:
-        ind['pmi'] = co('pmi', 65.0)
-    print(f"    pmi         = {ind['pmi']}")
+    # ⑧ 소비자심리 (수동 override 우선, 없으면 UMICH)
+    if ov.get('pmi') is not None:
+        ind['pmi'] = ov['pmi']
+        print(f"    pmi         = {ind['pmi']} (수동입력)")
+    else:
+        try:
+            r = requests.get(
+                "https://data.sca.isr.umich.edu/get-chart.php?r=1&t=tbmics&f=csv",
+                timeout=10, headers={'User-Agent': 'Mozilla/5.0'}
+            )
+            lines = [l.strip() for l in r.text.strip().split('\n') if l.strip()]
+            val = float(lines[-1].split(',')[-1])
+            ind['pmi'] = round(val, 1) if 20 < val < 130 else co('pmi', 65.0)
+        except:
+            ind['pmi'] = co('pmi', 65.0)
+        print(f"    pmi         = {ind['pmi']}")
 
     # ⑨ 신규실업청구 (수동입력 or 캐시)
     ind['claims'] = int(co('claims', 220000))
@@ -527,7 +547,7 @@ def adjust_budget(vix, base: int) -> dict:
     return {'amount':int(base*m),'multiplier':m,'reason':r,'base':base}
 
 def calc_allocation(wr, budget: int) -> dict:
-    if wr is None or wr > -60: return {'pct':0,'amount':0,'signal':'NONE'}
+    if wr is None or wr > -50: return {'pct':0,'amount':0,'signal':'NONE'}
     if wr <= -85: return {'pct':30,'amount':int(budget*0.30),'signal':'STRONG'}
     if wr <= -70: return {'pct':40,'amount':int(budget*0.40),'signal':'MEDIUM'}
     return {'pct':30,'amount':int(budget*0.30),'signal':'WEAK'}
