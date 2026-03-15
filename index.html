@@ -1478,31 +1478,37 @@ function renderIndPanel() {
   const det = S.data ? (S.data.egg && S.data.egg.scoring_details || {}) : {};
   const mo = S.pf ? (S.pf.manual_overrides || {}) : {};
   const items = [
-    { key:'vix',      name:'VIX 공포지수',       fmt:v=>v?.toFixed(1),   dot:v=>v>=25?'red':v<=15?'green':'yellow', src:'자동(yfinance)' },
-    { key:'fed_rate', name:'기준금리 (^IRX)',      fmt:v=>v?.toFixed(2)+'%', dot:v=>v>=5?'red':v<=2?'green':'yellow', src:'자동(yfinance)' },
-    { key:'spread',   name:'장단기 스프레드',      fmt:v=>v?.toFixed(2)+'%', dot:v=>v<0?'red':v>=0.5?'green':'yellow', src:'자동(^TNX-^IRX)' },
-    { key:'cpi_yoy',  name:'CPI YoY',             fmt:v=>v?.toFixed(2)+'%', dot:v=>v>=4?'red':v<=2.5?'green':'yellow', src:'자동(BLS API)' },
-    { key:'unemp',    name:'실업률',               fmt:v=>v?.toFixed(1)+'%', dot:v=>v>=4.5?'red':v<=3.8?'green':'yellow', src:'자동(BLS API)' },
-    { key:'pmi',      name:'소비자심리(Michigan)', fmt:v=>v?.toFixed(1),   dot:v=>v<=50?'red':v>=70?'green':'yellow', src:'자동(UMICH)' },
-    { key:'m2_yoy',   name:'M2 증가율 YoY',       fmt:v=>v?.toFixed(1)+'%', dot:v=>v<=0?'red':v>=5?'green':'yellow', src: mo.m2_yoy!=null?'수동입력':'캐시' },
-    { key:'hy_spread',name:'HY 스프레드',          fmt:v=>v?.toFixed(2)+'%', dot:v=>v>=4.5?'red':v<=3.5?'green':'yellow', src: mo.hy_spread!=null?'수동입력':'VIX추정' },
-    { key:'claims',   name:'신규실업청구',         fmt:v=>v?(v/1000).toFixed(0)+'K':'--', dot:v=>v>=250000?'red':v<=200000?'green':'yellow', src: mo.claims!=null?'수동입력':'캐시' },
+    { key:'vix',      name:'VIX 공포지수',        fmt:v=>v?.toFixed(1),              dot:v=>v>=25?'red':v<=15?'green':'yellow', src:'자동(yfinance)',  freq:'실시간',  freqCls:'pill-green' },
+    { key:'fed_rate', name:'기준금리 (^IRX)',      fmt:v=>v?.toFixed(2)+'%',         dot:v=>v>=5?'red':v<=2?'green':'yellow',   src:'자동(yfinance)',  freq:'실시간',  freqCls:'pill-green' },
+    { key:'spread',   name:'장단기 스프레드',      fmt:v=>v?.toFixed(2)+'%',         dot:v=>v<0?'red':v>=0.5?'green':'yellow',  src:'자동(^TNX-^IRX)', freq:'일간',    freqCls:'pill-green' },
+    { key:'cpi_yoy',  name:'CPI YoY',             fmt:v=>v?.toFixed(2)+'%',         dot:v=>v>=4?'red':v<=2.5?'green':'yellow', src:'자동(BLS API)',   freq:'월 1회 (둘째 주 수요일)', freqCls:'pill-blue' },
+    { key:'unemp',    name:'실업률',               fmt:v=>v?.toFixed(1)+'%',         dot:v=>v>=4.5?'red':v<=3.8?'green':'yellow', src:'자동(BLS API)', freq:'월 1회 (첫째 주 금요일)', freqCls:'pill-blue' },
+    { key:'pmi',      name:'소비자심리(Michigan)', fmt:v=>v?.toFixed(1),              dot:v=>v<=50?'red':v>=70?'green':'yellow', src:'자동(UMICH)',    freq:'월 2회 (둘째/넷째 금요일)', freqCls:'pill-blue' },
+    { key:'m2_yoy',   name:'M2 증가율 YoY',       fmt:v=>v?.toFixed(1)+'%',         dot:v=>v<=0?'red':v>=5?'green':'yellow',  src:mo.m2_yoy!=null?'수동입력':'캐시', freq:'월 1회 (월말 수동)', freqCls:mo.m2_yoy!=null?'pill-yellow':'pill-red' },
+    { key:'hy_spread',name:'HY 스프레드',          fmt:v=>v?.toFixed(2)+'%',         dot:v=>v>=4.5?'red':v<=3.5?'green':'yellow', src:mo.hy_spread!=null?'수동입력':'VIX추정', freq:'주 1~2회 (월요일 수동)', freqCls:mo.hy_spread!=null?'pill-yellow':'pill-red' },
+    { key:'claims',   name:'신규실업청구',         fmt:v=>v?(v/1000).toFixed(0)+'K':'--', dot:v=>v>=250000?'red':v<=200000?'green':'yellow', src:mo.claims!=null?'수동입력':'캐시', freq:'주 1회 (금요일 수동)', freqCls:mo.claims!=null?'pill-yellow':'pill-red' },
   ];
   const dotColor = { red:'var(--red)', green:'var(--green)', yellow:'var(--yellow)' };
-  const srcPill = { '자동(yfinance)':'pill-green','자동(BLS API)':'pill-green','자동(^TNX-^IRX)':'pill-green','자동(UMICH)':'pill-green','수동입력':'pill-yellow','캐시':'pill-blue','VIX추정':'pill-blue' };
   document.getElementById('indPanel').innerHTML = items.map(item => {
     const val = ind[item.key];
     const dc = item.dot(val);
     const display = item.fmt(val) || '--';
     const detail = det[item.key] || '';
-    return `<div class="ind-row">
+    const needsUpd = item.freqCls === 'pill-red';
+    const borderStyle = needsUpd ? 'border-left:2px solid var(--red);padding-left:8px;margin-left:-8px;' : '';
+    return `<div class="ind-row" style="${borderStyle}">
       <div class="ind-dot" style="background:${dotColor[dc]}"></div>
       <div class="ind-info">
         <div class="ind-name">${item.name}</div>
-        <div class="ind-sub">${detail} <span class="pill ${srcPill[item.src]||'pill-blue'}" style="padding:1px 6px;font-size:9px">${item.src}</span></div>
+        <div class="ind-sub" style="margin-top:3px">
+          ${detail ? '<span style="font-size:9px;color:var(--text3)">' + detail + '</span><br>' : ''}
+          <span class="pill ${item.freqCls}" style="padding:1px 6px;font-size:9px;margin-right:3px">${item.freq}</span>
+          <span class="pill pill-blue" style="padding:1px 6px;font-size:9px">${item.src}</span>
+        </div>
       </div>
       <div class="ind-right">
         <div class="ind-val" style="color:${dotColor[dc]}">${display}</div>
+        ${needsUpd ? '<div style="font-size:8px;color:var(--red);margin-top:2px">업데이트필요</div>' : ''}
       </div>
     </div>`;
   }).join('');
