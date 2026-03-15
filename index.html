@@ -345,7 +345,7 @@ body{padding-bottom:72px}
       <span>WR ≤ -70</span><span class="pill pill-yellow">40% 중매수</span>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0">
-      <span>WR ≤ -60</span><span class="pill pill-green">30% 약매수</span>
+      <span>WR ≤ -50</span><span class="pill pill-green">30% 약매수</span>
     </div>
   </div>
 
@@ -457,25 +457,107 @@ body{padding-bottom:72px}
 <div class="pcon">
 
   <!-- 경제지표 수동 입력 -->
+  <!-- ── 수동 입력 섹션 ── -->
   <div class="manual-card">
-    <div class="manual-t">⚠️ 수동 입력 필요 지표 (월 1~2회)</div>
-    <div class="manual-desc">아래 3개 지표는 자동 수집이 불안정합니다.<br>값 입력 후 저장하면 portfolio.json에 반영됩니다.</div>
-    <div class="form-g">
-      <label class="form-l">M2 통화 증가율 YoY (%)</label>
-      <input type="number" class="form-i" id="manM2" placeholder="예: 3.8" step="0.1">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/M2SL" target="_blank" style="color:var(--acc3);text-decoration:none">FRED M2SL 바로가기 →</a> (최근값에서 전년비 계산)</div>
+    <div class="manual-t">📋 경제지표 수동 입력</div>
+    <div class="manual-desc">자동 수집 불안정 지표 3개는 수동 입력이 필요합니다.<br>나머지 지표도 자동값이 이상할 경우 수동으로 덮어쓸 수 있습니다.</div>
+
+    <!-- M2: 원시값 입력 → 자동 YoY 계산 -->
+    <div class="form-g" style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="form-l" style="margin:0">🔴 M2 통화량 (Billions $)</label>
+        <a href="https://fred.stlouisfed.org/series/M2SL" target="_blank"
+           style="font-size:10px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:5px;padding:2px 7px">FRED M2SL →</a>
+      </div>
+      <div class="form-r2" style="gap:8px">
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">현재월 값 (예: 22442.1)</div>
+          <input type="number" class="form-i" id="manM2Raw" placeholder="22442.1" step="0.1" oninput="calcM2Yoy()">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">1년 전 값 (자동저장됨)</div>
+          <input type="number" class="form-i" id="manM2Prev" placeholder="자동" step="0.1" oninput="calcM2Yoy()">
+        </div>
+      </div>
+      <div id="m2YoyResult" style="margin-top:8px;padding:6px 10px;background:var(--surf);border-radius:8px;font-size:12px;font-family:var(--mono);display:none"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px">FRED에서 Jan 2026: <b>22,442.1</b> 형태로 표시된 숫자를 그대로 입력하세요</div>
     </div>
-    <div class="form-g">
-      <label class="form-l">HY 스프레드 (%)</label>
+
+    <!-- HY 스프레드 -->
+    <div class="form-g" style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px;margin-top:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="form-l" style="margin:0">🔴 HY 스프레드 (%)</label>
+        <a href="https://fred.stlouisfed.org/series/BAMLH0A0HYM2" target="_blank"
+           style="font-size:10px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:5px;padding:2px 7px">FRED HY →</a>
+      </div>
       <input type="number" class="form-i" id="manHy" placeholder="예: 3.2" step="0.01">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/BAMLH0A0HYM2" target="_blank" style="color:var(--acc3);text-decoration:none">FRED HY스프레드 바로가기 →</a> (최근값 그대로 입력)</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">최근값 그대로 입력 (예: 3.21)</div>
     </div>
-    <div class="form-g">
-      <label class="form-l">신규 실업수당 청구 (건수)</label>
+
+    <!-- 신규실업청구 -->
+    <div class="form-g" style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 12px;margin-top:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="form-l" style="margin:0">🔴 신규실업수당 청구 (건수)</label>
+        <a href="https://fred.stlouisfed.org/series/ICSA" target="_blank"
+           style="font-size:10px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:5px;padding:2px 7px">FRED ICSA →</a>
+      </div>
       <input type="number" class="form-i" id="manClaims" placeholder="예: 218000" step="1000">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/ICSA" target="_blank" style="color:var(--acc3);text-decoration:none">FRED ICSA 바로가기 →</a> (매주 목요일 발표, 건수 그대로 입력)</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">매주 목요일 발표. 건수 그대로 입력 (예: 218000)</div>
     </div>
-    <button class="btn btn-pri" onclick="saveManual()">💾 지표값 저장 (GitHub 반영)</button>
+
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">⬇ 자동 수집 지표도 이상할 경우 여기서 덮어쓸 수 있습니다</div>
+
+      <!-- VIX 수동 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--text2)">VIX 공포지수</span>
+            <a href="https://finance.yahoo.com/quote/%5EVIX/" target="_blank"
+               style="font-size:9px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:4px;padding:1px 5px">Yahoo →</a>
+          </div>
+          <input type="number" class="form-i" id="manVix" placeholder="자동 (비울 경우 자동값 사용)" step="0.1" style="margin-top:4px">
+        </div>
+      </div>
+
+      <!-- CPI 수동 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--text2)">CPI YoY (%)</span>
+            <a href="https://fred.stlouisfed.org/series/CPIAUCSL" target="_blank"
+               style="font-size:9px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:4px;padding:1px 5px">BLS/FRED →</a>
+          </div>
+          <input type="number" class="form-i" id="manCpi" placeholder="자동 (BLS API)" step="0.01" style="margin-top:4px">
+        </div>
+      </div>
+
+      <!-- 실업률 수동 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--text2)">실업률 (%)</span>
+            <a href="https://fred.stlouisfed.org/series/UNRATE" target="_blank"
+               style="font-size:9px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:4px;padding:1px 5px">BLS/FRED →</a>
+          </div>
+          <input type="number" class="form-i" id="manUnemp" placeholder="자동 (BLS API)" step="0.1" style="margin-top:4px">
+        </div>
+      </div>
+
+      <!-- 소비자심리 수동 -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--text2)">소비자심리 (Michigan)</span>
+            <a href="https://data.sca.isr.umich.edu/" target="_blank"
+               style="font-size:9px;color:var(--acc3);text-decoration:none;border:1px solid var(--acc3);border-radius:4px;padding:1px 5px">UMICH →</a>
+          </div>
+          <input type="number" class="form-i" id="manPmi" placeholder="자동 (UMICH)" step="0.1" style="margin-top:4px">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-pri" onclick="saveManual()" style="margin-top:12px">💾 지표값 저장 (GitHub 반영)</button>
   </div>
 
   <!-- 경제지표 현황 -->
@@ -762,17 +844,78 @@ async function savePortfolio() {
 // ═══════════════════════════════════════
 // 수동 지표 저장
 // ═══════════════════════════════════════
+// ── M2 YoY 자동 계산
+function calcM2Yoy() {
+  const cur  = parseFloat(document.getElementById('manM2Raw').value);
+  const prev = parseFloat(document.getElementById('manM2Prev').value);
+  const el   = document.getElementById('m2YoyResult');
+  if (!isNaN(cur) && !isNaN(prev) && prev > 0) {
+    const yoy = ((cur / prev) - 1) * 100;
+    el.style.display = 'block';
+    el.innerHTML = `M2 YoY = (${cur.toLocaleString()} / ${prev.toLocaleString()} - 1) × 100 = <strong style="color:${yoy>=0?'var(--green)':'var(--red)'}">${yoy.toFixed(2)}%</strong>`;
+    el.dataset.yoy = yoy.toFixed(2);
+  } else if (!isNaN(cur) && isNaN(prev)) {
+    el.style.display = 'block';
+    el.innerHTML = `<span style="color:var(--yellow)">1년 전 값을 입력하면 자동 계산됩니다</span>`;
+    el.dataset.yoy = '';
+  } else {
+    el.style.display = 'none';
+    el.dataset.yoy = '';
+  }
+}
+
 async function saveManual() {
-  const m2 = parseFloat(document.getElementById('manM2').value);
-  const hy = parseFloat(document.getElementById('manHy').value);
-  const cl = parseFloat(document.getElementById('manClaims').value);
   if (!S.pf) await loadPortfolio();
   S.pf.manual_overrides = S.pf.manual_overrides || {};
-  if (!isNaN(m2)) S.pf.manual_overrides.m2_yoy = m2;
-  if (!isNaN(hy)) S.pf.manual_overrides.hy_spread = hy;
-  if (!isNaN(cl)) S.pf.manual_overrides.claims = cl;
+  S.pf.m2_history       = S.pf.m2_history || [];
+
+  // M2: 원시값 → YoY 계산 후 저장
+  const m2Raw  = parseFloat(document.getElementById('manM2Raw').value);
+  const m2Prev = parseFloat(document.getElementById('manM2Prev').value);
+  const yoyEl  = document.getElementById('m2YoyResult');
+  const yoyVal = parseFloat(yoyEl.dataset.yoy);
+
+  if (!isNaN(m2Raw)) {
+    // 현재 값을 히스토리에 저장 (날짜 포함)
+    const today = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const existing = S.pf.m2_history.findIndex(h => h.ym === today);
+    if (existing >= 0) S.pf.m2_history[existing].value = m2Raw;
+    else               S.pf.m2_history.push({ ym: today, value: m2Raw });
+    // 12개월 전 자동 찾기
+    const prevYm = new Date(new Date().setMonth(new Date().getMonth() - 12))
+                     .toISOString().slice(0, 7);
+    const prevEntry = S.pf.m2_history.find(h => h.ym === prevYm);
+    if (prevEntry) {
+      const auto = ((m2Raw / prevEntry.value) - 1) * 100;
+      S.pf.manual_overrides.m2_yoy = parseFloat(auto.toFixed(2));
+      // 1년 전 칸에 자동 채우기
+      document.getElementById('manM2Prev').value = prevEntry.value;
+      calcM2Yoy();
+    } else if (!isNaN(yoyVal)) {
+      S.pf.manual_overrides.m2_yoy = yoyVal;
+    } else if (!isNaN(m2Prev) && m2Prev > 0) {
+      S.pf.manual_overrides.m2_yoy = parseFloat(((m2Raw/m2Prev-1)*100).toFixed(2));
+    }
+  }
+
+  // 나머지 수동 입력
+  const hy    = parseFloat(document.getElementById('manHy').value);
+  const cl    = parseFloat(document.getElementById('manClaims').value);
+  const vix   = parseFloat(document.getElementById('manVix').value);
+  const cpi   = parseFloat(document.getElementById('manCpi').value);
+  const unemp = parseFloat(document.getElementById('manUnemp').value);
+  const pmi   = parseFloat(document.getElementById('manPmi').value);
+
+  if (!isNaN(hy))    S.pf.manual_overrides.hy_spread = hy;
+  if (!isNaN(cl))    S.pf.manual_overrides.claims    = cl;
+  if (!isNaN(vix))   S.pf.manual_overrides.vix       = vix;   else delete S.pf.manual_overrides.vix;
+  if (!isNaN(cpi))   S.pf.manual_overrides.cpi_yoy   = cpi;   else delete S.pf.manual_overrides.cpi_yoy;
+  if (!isNaN(unemp)) S.pf.manual_overrides.unemp     = unemp; else delete S.pf.manual_overrides.unemp;
+  if (!isNaN(pmi))   S.pf.manual_overrides.pmi       = pmi;   else delete S.pf.manual_overrides.pmi;
+
   await savePortfolio();
-  toast('✅ 지표 저장 완료 — 다음 Actions 실행 시 반영');
+  const yoyFinal = S.pf.manual_overrides.m2_yoy;
+  toast(`✅ 저장 완료${yoyFinal != null ? ' | M2 YoY: ' + yoyFinal + '%' : ''}`);
   renderIndPanel();
 }
 
@@ -1279,9 +1422,23 @@ function renderSet() {
 
   // 수동 입력값 현재값 표시
   const mo = S.pf ? (S.pf.manual_overrides || {}) : {};
-  if (mo.m2_yoy != null) document.getElementById('manM2').value = mo.m2_yoy;
-  if (mo.hy_spread != null) document.getElementById('manHy').value = mo.hy_spread;
-  if (mo.claims != null) document.getElementById('manClaims').value = mo.claims;
+  const hist = S.pf ? (S.pf.m2_history || []) : [];
+  // M2 최근 원시값 복원
+  if (hist.length) {
+    const latest = hist.sort((a,b)=>b.ym.localeCompare(a.ym))[0];
+    document.getElementById('manM2Raw').value = latest.value;
+    // 1년 전 값 자동 채우기
+    const prevYm = new Date(new Date().setMonth(new Date().getMonth()-12)).toISOString().slice(0,7);
+    const prevEntry = hist.find(h => h.ym === prevYm);
+    if (prevEntry) { document.getElementById('manM2Prev').value = prevEntry.value; }
+    calcM2Yoy();
+  }
+  if (mo.hy_spread != null) document.getElementById('manHy').value    = mo.hy_spread;
+  if (mo.claims    != null) document.getElementById('manClaims').value = mo.claims;
+  if (mo.vix       != null) document.getElementById('manVix').value   = mo.vix;
+  if (mo.cpi_yoy   != null) document.getElementById('manCpi').value   = mo.cpi_yoy;
+  if (mo.unemp     != null) document.getElementById('manUnemp').value = mo.unemp;
+  if (mo.pmi       != null) document.getElementById('manPmi').value   = mo.pmi;
 
   // 추가 입금 목록
   const deps = extraDeps();
