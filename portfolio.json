@@ -1,257 +1,27 @@
 {
-  "settings": {
-    "monthly_krw": 800000,
-    "start_date": "2024-01-01",
-    "wr_period": 14,
-    "wr_threshold": -60,
-    "github_repo": "YOUR_USERNAME/YOUR_REPO"
+  "_comment": "보유 종목을 직접 입력하세요. avg_price_usd=평균매입단가($), shares=보유주수, dividends_received_usd=누적수령배당금",
+
+  "manual_overrides": {
+    "_comment": "FRED 대체 수동 입력값. null이면 캐시/추정값 사용. 매월 업데이트 권장",
+    "m2_yoy":   null,
+    "claims":   null,
+    "hy_spread": null
   },
+
   "holdings": [
     {
-      "ticker": "KMB",
-      "shares": 0.0583,
-      "avg_price_usd": 102.57,
+      "ticker": "KO",
+      "shares": 10,
+      "avg_price_usd": 58.00,
       "sector": "필수소비재",
-      "start_date": "2026-03-06"
+      "dividends_received_usd": 5.60
     },
     {
-      "ticker": "EMR",
-      "shares": 0.0859,
-      "avg_price_usd": 139.33,
-      "sector": "산업재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "SWK",
-      "shares": 0.1585,
-      "avg_price_usd": 75.48,
-      "sector": "산업재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "EXPD",
-      "shares": 0.0412,
-      "avg_price_usd": 145.27,
-      "sector": "산업재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "AFL",
-      "shares": 0.0544,
-      "avg_price_usd": 109.85,
-      "sector": "금융",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "SPGI",
-      "shares": 0.0132,
-      "avg_price_usd": 450.83,
-      "sector": "금융",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "AMP",
-      "shares": 0.0258,
-      "avg_price_usd": 462.68,
-      "sector": "금융",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "NUE",
-      "shares": 0.0354,
-      "avg_price_usd": 168.73,
-      "sector": "소재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "LOW",
-      "shares": 0.0715,
-      "avg_price_usd": 250.74,
-      "sector": "경기소비재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "GPC",
-      "shares": 0.1562,
-      "avg_price_usd": 114.76,
-      "sector": "경기소비재",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "IBM",
-      "shares": 0.0233,
-      "avg_price_usd": 256.77,
-      "sector": "기술",
-      "start_date": "2026-03-06"
-    },
-    {
-      "ticker": "TXN",
-      "shares": 0.0307,
-      "avg_price_usd": 194.81,
-      "sector": "기술",
-      "start_date": "2026-03-06"
+      "ticker": "PG",
+      "shares": 5,
+      "avg_price_usd": 147.50,
+      "sector": "필수소비재",
+      "dividends_received_usd": 3.85
     }
-  ],
-  "transactions": [
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "KMB",
-      "shares": 0.0583,
-      "price_usd": 102.57,
-      "fx": 1486,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "EMR",
-      "shares": 0.0859,
-      "price_usd": 139.33,
-      "fx": 1487,
-      "note": "신호매수 중매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "SWK",
-      "shares": 0.1585,
-      "price_usd": 75.48,
-      "fx": 1487,
-      "note": "신호매수 중매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "EXPD",
-      "shares": 0.0412,
-      "price_usd": 145.27,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "AFL",
-      "shares": 0.0544,
-      "price_usd": 109.85,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "SPGI",
-      "shares": 0.0132,
-      "price_usd": 450.83,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "AMP",
-      "shares": 0.0258,
-      "price_usd": 462.68,
-      "fx": 1487,
-      "note": "신호매수 중매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "NUE",
-      "shares": 0.0354,
-      "price_usd": 168.73,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "LOW",
-      "shares": 0.0715,
-      "price_usd": 250.74,
-      "fx": 1487,
-      "note": "신호매수 강매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "GPC",
-      "shares": 0.1562,
-      "price_usd": 114.76,
-      "fx": 1487,
-      "note": "신호매수 강매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "IBM",
-      "shares": 0.0233,
-      "price_usd": 256.77,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    },
-    {
-      "date": "2026-03-06",
-      "type": "buy",
-      "ticker": "TXN",
-      "shares": 0.0307,
-      "price_usd": 194.81,
-      "fx": 1487,
-      "note": "신호매수 약매수"
-    }
-  ],
-  "extra_deposits": [],
-  "signal_stages": {
-    "KMB": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "EMR": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "SWK": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "EXPD": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "AFL": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "SPGI": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "AMP": {
-      "done": 2,
-      "updated": "2026-03-06"
-    },
-    "NUE": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "LOW": {
-      "done": 3,
-      "updated": "2026-03-06"
-    },
-    "GPC": {
-      "done": 3,
-      "updated": "2026-03-06"
-    },
-    "IBM": {
-      "done": 1,
-      "updated": "2026-03-06"
-    },
-    "TXN": {
-      "done": 1,
-      "updated": "2026-03-06"
-    }
-  },
-  "signal_passes": []
+  ]
 }
