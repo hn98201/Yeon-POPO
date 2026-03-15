@@ -213,6 +213,103 @@ def send_daily_summary(egg, budget, signals, fx):
     tg('\n'.join(lines))
 
 # ═══════════════════════════════════════════
+# 지표 업데이트 주기 및 리마인더
+# ═══════════════════════════════════════════
+
+# 각 지표별 업데이트 주기 정보
+INDICATOR_SCHEDULE = {
+    'vix':       {'name': 'VIX 공포지수',      'freq': '실시간',  'src': '자동(yfinance)',  'manual': False},
+    'fed_rate':  {'name': '기준금리 (^IRX)',     'freq': '실시간',  'src': '자동(yfinance)',  'manual': False},
+    'spread':    {'name': '장단기 스프레드',     'freq': '일간',    'src': '자동(^TNX-^IRX)', 'manual': False},
+    'cpi_yoy':   {'name': 'CPI YoY',            'freq': '월 1회',  'src': '자동(BLS API)',   'manual': False,
+                  'release': '매월 둘째 주 수요일 22:30 KST'},
+    'unemp':     {'name': '실업률',              'freq': '월 1회',  'src': '자동(BLS API)',   'manual': False,
+                  'release': '매월 첫째 주 금요일 21:30 KST'},
+    'pmi':       {'name': '소비자심리(Michigan)', 'freq': '월 2회', 'src': '자동(UMICH)',     'manual': False,
+                  'release': '둘째 금요일(예비) / 넷째 금요일(최종) 23:00 KST'},
+    'm2_yoy':    {'name': 'M2 통화증가율',       'freq': '월 1회',  'src': '수동입력',        'manual': True,
+                  'release': '매월 마지막 월요일 전후 (FRED M2SL 업데이트 후)'},
+    'hy_spread': {'name': 'HY 스프레드',         'freq': '주 1~2회', 'src': '수동입력',       'manual': True,
+                  'release': '매주 월요일 권장 (FRED BAMLH0A0HYM2)'},
+    'claims':    {'name': '신규실업청구',         'freq': '주 1회',  'src': '수동입력',        'manual': True,
+                  'release': '매주 목요일 21:30 KST (DOL 발표)'},
+}
+
+def send_indicator_reminder(now: 'datetime') -> bool:
+    """
+    지표 업데이트 리마인더 발송
+    - 매주 목요일: 신규실업청구 업데이트 알림
+    - 매주 월요일: HY 스프레드 확인 알림
+    - 매월 25일 이후: M2 업데이트 알림 (월말 FRED 업데이트 이후)
+    반환: 발송 여부
+    """
+    sent = False
+    weekday = now.weekday()  # 0=월, 3=목
+    day = now.day
+    hour = now.hour
+
+    # 오전 9시 KST 한 번만 발송 (9~10시 사이)
+    if not (9 <= hour <= 10):
+        return False
+
+    lines = []
+
+    # ① 매주 목요일: 신규실업청구 (DOL 매주 목요일 21:30 KST 발표 → 다음날 아침 알림)
+    # 실제 DOL 발표는 목요일 밤, 금요일 아침에 업데이트 권장
+    if weekday == 4:  # 금요일
+        lines.append(
+            f"📋 <b>[주간] 신규실업청구 업데이트 필요</b>
+"            f"어제(목요일) DOL 발표됨
+"            f"→ <a href='https://fred.stlouisfed.org/series/ICSA'>FRED ICSA</a> 확인 후 앱 설정탭에 입력
+"            f"현재 저장값: {load_manual_overrides().get('claims', '없음'):,}건 (있으면 건수)"
+        )
+
+    # ② 매주 월요일: HY 스프레드 주간 점검
+    if weekday == 0:  # 월요일
+        lines.append(
+            f"📋 <b>[주간] HY 스프레드 점검</b>
+"            f"→ <a href='https://fred.stlouisfed.org/series/BAMLH0A0HYM2'>FRED BAMLH0A0HYM2</a> 확인
+"            f"현재 저장값: {load_manual_overrides().get('hy_spread', 'VIX추정')}%"
+        )
+
+    # ③ 매월 26~28일: M2 업데이트 (FRED는 보통 매월 마지막 월요일~화요일 업데이트)
+    if 26 <= day <= 28 and weekday in [0, 1, 2]:  # 월~수
+        lines.append(
+            f"📋 <b>[월간] M2 통화량 업데이트 필요</b>
+"            f"FRED M2SL 이번 달 업데이트 시기
+"            f"→ <a href='https://fred.stlouisfed.org/series/M2SL'>FRED M2SL</a> 확인 후 앱 설정탭에 입력
+"            f"현재 저장값: {load_manual_overrides().get('m2_yoy', '없음')}%"
+        )
+
+    # ④ 매월 둘째 주 수요일: CPI 발표 알림 (자동이지만 확인 권장)
+    if weekday == 2 and 8 <= day <= 14:  # 수요일 + 둘째 주
+        lines.append(
+            f"ℹ️ <b>[월간] CPI 발표일</b>
+"            f"오늘 밤 22:30 KST BLS CPI 발표 예정
+"            f"→ 내일 워크플로우 실행 시 자동 반영됨"
+        )
+
+    # ⑤ 매월 첫째 주 금요일: 고용지표 발표 알림
+    if weekday == 4 and day <= 7:  # 금요일 + 첫째 주
+        lines.append(
+            f"ℹ️ <b>[월간] 고용 지표 발표일</b>
+"            f"오늘 밤 21:30 KST BLS 고용보고서 발표 예정
+"            f"→ 내일 워크플로우 실행 시 실업률 자동 반영됨"
+        )
+
+    if lines:
+        header = f"⏰ <b>경제지표 업데이트 알림</b> ({now.strftime('%m/%d %a')}KST)
+━━━━━━━━━━━━━━━
+"
+        tg(header + '
+━━━━━━━━━━━━━━━
+'.join(lines))
+        print(f"  → 지표 리마인더 {len(lines)}건 발송")
+        sent = True
+
+    return sent
+
+# ═══════════════════════════════════════════
 # 캐시 / 폴백
 # ═══════════════════════════════════════════
 def load_cache() -> dict:
@@ -795,6 +892,9 @@ def main():
     # 4순위: 신호 없을 때 오전 일일 요약
     if not signals and not wr_changes and 7 <= now.hour <= 10:
         send_daily_summary(egg, budget, signals, fx)
+
+    # 5순위: 지표 업데이트 리마인더 (발표 주기별 수동입력 유도)
+    send_indicator_reminder(now)
 
     print("🎉 모든 작업 완료!")
 
