@@ -2,20 +2,16 @@
   "_comment": "보유 종목을 직접 입력하세요. avg_price_usd=평균매입단가($), shares=보유주수, dividends_received_usd=누적수령배당금",
 
   "manual_overrides": {
-    "_comment": "FRED 대체 수동 입력값. null이면 캐시/추정값 사용. 매월 업데이트 권장",
-    "m2_yoy":   null,
-    "claims":   null,
+    "m2_yoy": null,
+    "claims": null,
     "hy_spread": null
   },
 
-  "holdings": [
-    {
-      "ticker": "KO",
-      "shares": 10,
-      "avg_price_usd": 58.00,
-      "sector": "필수소비재",
-      "dividends_received_usd": 5.60
-    },
+  "holdings": [],
+  "transactions": [],
+  "extra_deposits": [],
+  "signal_stages": {}
+},
     {
       "ticker": "PG",
       "shares": 5,
