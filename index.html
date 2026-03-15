@@ -444,6 +444,12 @@ body{padding-bottom:72px}
     <div id="divByTicker" style="margin-top:10px"></div>
   </div>
 
+  <!-- 거래 관리 버튼 -->
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn-sm btn-del" style="flex:1;padding:10px" onclick="undoLastTx()">↩ 마지막 거래 취소</button>
+    <button class="btn-sm" style="flex:1;padding:10px;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.2)" onclick="resetPortfolioConfirm()">🗑 포트폴리오 초기화</button>
+  </div>
+
   <!-- 최근 거래 -->
   <div class="card">
     <div class="card-t">최근 거래내역</div>
@@ -609,6 +615,18 @@ body{padding-bottom:72px}
       <input type="number" class="form-i" id="depAmt" placeholder="금액 (원)">
     </div>
     <button class="btn btn-pri" onclick="addDeposit()" style="margin-top:8px">추가 입금 등록</button>
+  </div>
+
+  <!-- 워크플로우 실행 -->
+  <div class="card" style="border-color:rgba(16,185,129,.3)">
+    <div class="card-t" style="color:var(--green)">🚀 GitHub Actions 원격 실행</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6">
+      저장소·토큰 설정 후 모바일에서 바로 워크플로우를 실행합니다.<br>실행 후 약 5~10분 뒤 새로고침하면 최신 데이터가 반영됩니다.
+    </div>
+    <div id="wfStatus" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;font-size:12px"></div>
+    <button class="btn btn-pri" style="background:linear-gradient(135deg,#059669,#047857);margin-top:0" onclick="triggerWorkflow()">
+      🚀 워크플로우 지금 실행
+    </button>
   </div>
 
   <button class="btn btn-sec" onclick="doRefresh()">🔄 prices.json 새로고침</button>
@@ -1628,6 +1646,144 @@ async function doRefresh() {
       <span style="font-size:11px;color:var(--text3)">GitHub Actions 실행 후 prices.json이 생성됩니다</span>
     `;
   }
+}
+
+// ═══════════════════════════════════════
+// 워크플로우 원격 실행
+// ═══════════════════════════════════════
+async function triggerWorkflow() {
+  const { ghToken='', ghRepo='' } = S.cfg;
+  const wfEl = document.getElementById('wfStatus');
+  if (!ghToken || !ghRepo) {
+    wfEl.style.display='block';
+    wfEl.style.background='rgba(239,68,68,.15)';
+    wfEl.style.color='var(--red)';
+    wfEl.style.border='1px solid rgba(239,68,68,.3)';
+    wfEl.textContent='❌ GitHub 토큰과 저장소를 먼저 입력하세요';
+    return;
+  }
+  // workflow 파일명 찾기 (update.yml 또는 daily.yml)
+  const wfFiles = ['update.yml', 'daily.yml'];
+  let triggered = false;
+  wfEl.style.display='block';
+  wfEl.style.background='rgba(245,158,11,.12)';
+  wfEl.style.color='var(--yellow)';
+  wfEl.style.border='1px solid rgba(245,158,11,.3)';
+  wfEl.textContent='⏳ 워크플로우 실행 요청 중...';
+
+  for (const wfFile of wfFiles) {
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${ghRepo}/actions/workflows/${wfFile}/dispatches`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `token ${ghToken}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/vnd.github.v3+json',
+          },
+          body: JSON.stringify({ ref: 'main' }),
+        }
+      );
+      if (r.status === 204) {
+        triggered = true;
+        wfEl.style.background='rgba(16,185,129,.12)';
+        wfEl.style.color='var(--green)';
+        wfEl.style.border='1px solid rgba(16,185,129,.3)';
+        wfEl.textContent=`✅ 워크플로우 실행 요청 완료 (${wfFile})
+약 5~10분 후 새로고침하세요`;
+        toast('🚀 워크플로우 실행 시작!');
+        // 10분 뒤 자동 새로고침 안내
+        setTimeout(() => {
+          wfEl.textContent = '⏳ 실행 중... 완료 후 새로고침(↻) 버튼을 누르세요';
+        }, 3000);
+        break;
+      }
+    } catch(e) {
+      console.warn(`${wfFile} 시도 실패`, e);
+    }
+  }
+  if (!triggered) {
+    wfEl.style.background='rgba(239,68,68,.12)';
+    wfEl.style.color='var(--red)';
+    wfEl.style.border='1px solid rgba(239,68,68,.3)';
+    wfEl.textContent='❌ 실행 실패 — 토큰 권한(Actions:write) 또는 워크플로우 파일명을 확인하세요';
+  }
+}
+
+// ═══════════════════════════════════════
+// 거래 되돌리기 / 포트폴리오 초기화
+// ═══════════════════════════════════════
+async function undoLastTx() {
+  await loadPortfolio();
+  const txns = S.pf.transactions || [];
+  if (!txns.length) { toast('⚠️ 취소할 거래가 없습니다'); return; }
+
+  const last = txns[txns.length - 1];
+  const label = last.type === 'buy' ? '매수' : last.type === 'sell' ? '매도'
+    : last.type === 'dividend' ? '배당' : last.type;
+
+  // 확인 없이 즉시 취소 (모바일 간단하게)
+  S.pf.transactions.pop();
+
+  // holdings 역산
+  if ((last.type === 'buy' || last.type === 'div_reinvest') && last.ticker) {
+    const idx = S.pf.holdings.findIndex(h => h.ticker === last.ticker);
+    if (idx >= 0) {
+      const h = S.pf.holdings[idx];
+      const prevShares = h.shares - (last.shares || 0);
+      if (prevShares <= 0.0001) {
+        S.pf.holdings.splice(idx, 1);
+      } else {
+        // 평균단가 역산
+        const prevCost = h.avg_price_usd * h.shares - (last.shares||0) * (last.price_usd||0);
+        h.shares = prevShares;
+        h.avg_price_usd = prevCost / prevShares;
+      }
+    }
+  } else if (last.type === 'sell' && last.ticker) {
+    const idx = S.pf.holdings.findIndex(h => h.ticker === last.ticker);
+    if (idx >= 0) {
+      S.pf.holdings[idx].shares += (last.shares || 0);
+    } else {
+      S.pf.holdings.push({
+        ticker: last.ticker, shares: last.shares || 0,
+        avg_price_usd: last.price_usd || 0,
+        sector: NOBL[last.ticker] || '--',
+      });
+    }
+  }
+
+  // signal_stages에서도 해당 종목 제거 (매수 취소 시)
+  if (last.type === 'buy' && last.ticker && S.pf.signal_stages) {
+    delete S.pf.signal_stages[last.ticker];
+  }
+
+  await savePortfolio();
+  renderTxList(); renderHome(); renderHoldList();
+  toast(`↩ ${last.ticker || ''} ${label} 취소 완료`);
+}
+
+async function resetPortfolioConfirm() {
+  // 모바일 confirm 대신 두 번 탭 방식
+  if (!resetPortfolioConfirm._armed) {
+    resetPortfolioConfirm._armed = true;
+    toast('⚠️ 한 번 더 누르면 전체 초기화됩니다');
+    setTimeout(() => { resetPortfolioConfirm._armed = false; }, 4000);
+    return;
+  }
+  resetPortfolioConfirm._armed = false;
+  await loadPortfolio();
+  // 수동입력값과 m2_history는 보존, 나머지 초기화
+  const mo = S.pf.manual_overrides || {};
+  const m2h = S.pf.m2_history || [];
+  S.pf = {
+    holdings: [], transactions: [], extra_deposits: [],
+    signal_stages: {}, manual_overrides: mo, m2_history: m2h,
+  };
+  await savePortfolio();
+  renderTxList(); renderHome(); renderHoldList(); renderDivChart();
+  toast('🗑️ 포트폴리오 초기화 완료 (지표값은 유지)');
 }
 
 // ═══════════════════════════════════════
