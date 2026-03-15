@@ -352,21 +352,106 @@ def get_economic_indicators() -> dict:
         )
     print(f"    hy_spread   = {ind['hy_spread']}% ({'수동' if ov.get('hy_spread') else 'VIX추정'})")
 
-    # ⑧ 소비자심리 (수동 override 우선, 없으면 UMICH)
+    # ⑧ 소비자심리 (수동 override 우선, 없으면 다중 소스 시도)
     if ov.get('pmi') is not None:
         ind['pmi'] = ov['pmi']
         print(f"    pmi         = {ind['pmi']} (수동입력)")
     else:
+        pmi_val = None
+
+        # 방법1: FRED API (UMCSENT - 월간 최종값)
         try:
-            r = requests.get(
-                "https://data.sca.isr.umich.edu/get-chart.php?r=1&t=tbmics&f=csv",
-                timeout=10, headers={'User-Agent': 'Mozilla/5.0'}
-            )
-            lines = [l.strip() for l in r.text.strip().split('\n') if l.strip()]
-            val = float(lines[-1].split(',')[-1])
-            ind['pmi'] = round(val, 1) if 20 < val < 130 else co('pmi', 65.0)
+            bls_pmi = bls_fetch('UMCSENT')  # BLS와 동일 방식, FRED Public
+            if not bls_pmi:
+                raise ValueError("UMCSENT 없음")
         except:
-            ind['pmi'] = co('pmi', 65.0)
+            pass
+
+        # 방법2: FRED CSV (직접 다운로드)
+        if pmi_val is None:
+            try:
+                r = requests.get(
+                    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=UMCSENT",
+                    timeout=15,
+                    headers={'User-Agent': 'Mozilla/5.0 (compatible; portfolio-bot/1.0)'}
+                )
+                if r.status_code == 200:
+                    lines = [l.strip() for l in r.text.strip().split('\n')
+                             if l.strip() and not l.startswith('DATE')]
+                    # 최근값 역순으로 탐색 (결측치 '.' 건너뜀)
+                    for line in reversed(lines):
+                        parts = line.split(',')
+                        if len(parts) >= 2 and parts[1].strip() not in ('.', ''):
+                            v = float(parts[1].strip())
+                            if 20 < v < 130:
+                                pmi_val = round(v, 1)
+                                print(f"    pmi(FRED CSV) = {pmi_val}")
+                                break
+            except Exception as e:
+                print(f"    FRED CSV 실패: {e}")
+
+        # 방법3: UMICH 직접 (여러 엔드포인트 시도)
+        if pmi_val is None:
+            umich_urls = [
+                "https://data.sca.isr.umich.edu/get-chart.php?r=1&t=tbmics&f=csv",
+                "https://data.sca.isr.umich.edu/get-chart.php?r=2&t=tbmics&f=csv",
+                "https://data.sca.isr.umich.edu/fetchchart.php?surv=cs&start=202001&end=202612&type=M",
+            ]
+            for url in umich_urls:
+                try:
+                    r = requests.get(url, timeout=10,
+                                     headers={'User-Agent': 'Mozilla/5.0'})
+                    if r.status_code != 200 or not r.text.strip():
+                        continue
+                    lines = [l.strip() for l in r.text.strip().split('\n') if l.strip()]
+                    # 숫자가 있는 마지막 행 찾기
+                    for line in reversed(lines):
+                        parts = line.replace('\t', ',').split(',')
+                        for p in reversed(parts):
+                            try:
+                                v = float(p.strip())
+                                if 20 < v < 130:
+                                    pmi_val = round(v, 1)
+                                    print(f"    pmi(UMICH) = {pmi_val}")
+                                    break
+                            except:
+                                continue
+                        if pmi_val is not None:
+                            break
+                    if pmi_val is not None:
+                        break
+                except Exception as e:
+                    print(f"    UMICH URL 실패({url[-30:]}): {e}")
+
+        # 방법4: Trading Economics 스크래핑 (최후 수단)
+        if pmi_val is None:
+            try:
+                r = requests.get(
+                    "https://tradingeconomics.com/united-states/consumer-confidence",
+                    timeout=12,
+                    headers={
+                        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+                        'Accept': 'text/html'
+                    }
+                )
+                import re
+                # "55.5" 형태의 Michigan Sentiment 수치 파싱
+                matches = re.findall(r'"value"\s*:\s*"?([\d.]+)"?', r.text)
+                for m in matches:
+                    v = float(m)
+                    if 30 < v < 120:
+                        pmi_val = round(v, 1)
+                        print(f"    pmi(TE) = {pmi_val}")
+                        break
+            except Exception as e:
+                print(f"    Trading Economics 실패: {e}")
+
+        # 최종 폴백: 캐시
+        if pmi_val is None:
+            pmi_val = co('pmi', 56.6)  # 최근 알려진 값으로 기본값 설정
+            print(f"    pmi(캐시폴백) = {pmi_val}")
+
+        ind['pmi'] = pmi_val
         print(f"    pmi         = {ind['pmi']}")
 
     # ⑨ 신규실업청구 (수동입력 or 캐시)
