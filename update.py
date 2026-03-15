@@ -54,14 +54,14 @@ STAGE_SECTORS = {
 # WR 단계 정의
 def wr_level(wr):
     """WR 값을 단계로 변환 (0=신호없음, 1=약매수, 2=중매수, 3=강매수)"""
-    if wr is None or wr > -50:  return 0
+    if wr is None or wr > -60:  return 0
     if wr > -70:                return 1  # -50 ~ -70: 약매수
     if wr > -85:                return 2  # -70 ~ -85: 중매수
     return 3                             # -85 이하: 강매수
 
 WR_LEVEL_LABEL = {
     0: None,
-    1: '🟢 약매수 (WR ≤ -50, 30%)',
+    1: '🟢 약매수 (WR ≤ -60, 30%)',
     2: '🟡 중매수 (WR ≤ -70, 40%)',
     3: '🔴 강매수 (WR ≤ -85, 30%)',
 }
@@ -527,7 +527,7 @@ def adjust_budget(vix, base: int) -> dict:
     return {'amount':int(base*m),'multiplier':m,'reason':r,'base':base}
 
 def calc_allocation(wr, budget: int) -> dict:
-    if wr is None or wr > -50: return {'pct':0,'amount':0,'signal':'NONE'}
+    if wr is None or wr > -60: return {'pct':0,'amount':0,'signal':'NONE'}
     if wr <= -85: return {'pct':30,'amount':int(budget*0.30),'signal':'STRONG'}
     if wr <= -70: return {'pct':40,'amount':int(budget*0.40),'signal':'MEDIUM'}
     return {'pct':30,'amount':int(budget*0.30),'signal':'WEAK'}
