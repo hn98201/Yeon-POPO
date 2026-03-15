@@ -6,7 +6,7 @@ on:
     - cron: '30 22 * * 1-5'
     # 평일 오후 11:00 KST = UTC 14:00
     - cron: '0 14 * * 1-5'
-  workflow_dispatch:  # 수동 실행 허용
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,11 +14,14 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
-      - name: Checkout
+      - name: Checkout (최신 portfolio.json 포함)
         uses: actions/checkout@v4
+        with:
+          ref: main          # 항상 최신 브랜치 기준 (수동 저장 반영)
+          fetch-depth: 1
 
       - name: Python 설정
         uses: actions/setup-python@v5
@@ -27,6 +30,23 @@ jobs:
 
       - name: 패키지 설치
         run: pip install yfinance pandas requests
+
+      - name: portfolio.json 수동입력 확인
+        run: |
+          echo "=== portfolio.json manual_overrides ==="
+          python -c "
+          import json
+          try:
+              with open('portfolio.json') as f:
+                  pf = json.load(f)
+              mo = pf.get('manual_overrides', {})
+              print('pmi:', mo.get('pmi'))
+              print('m2_yoy:', mo.get('m2_yoy'))
+              print('hy_spread:', mo.get('hy_spread'))
+              print('claims:', mo.get('claims'))
+          except Exception as e:
+              print('오류:', e)
+          "
 
       - name: 포트폴리오 업데이트 실행
         env:
