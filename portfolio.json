@@ -1,23 +1,12 @@
 {
-  "_comment": "보유 종목을 직접 입력하세요. avg_price_usd=평균매입단가($), shares=보유주수, dividends_received_usd=누적수령배당금",
-
   "manual_overrides": {
+    "_comment": "M2/HY스프레드/신규실업청구 수동입력. null이면 캐시/추정값 사용",
     "m2_yoy": null,
     "claims": null,
     "hy_spread": null
   },
-
   "holdings": [],
   "transactions": [],
   "extra_deposits": [],
   "signal_stages": {}
-},
-    {
-      "ticker": "PG",
-      "shares": 5,
-      "avg_price_usd": 147.50,
-      "sector": "필수소비재",
-      "dividends_received_usd": 3.85
-    }
-  ]
 }
