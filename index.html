@@ -463,17 +463,17 @@ body{padding-bottom:72px}
     <div class="form-g">
       <label class="form-l">M2 통화 증가율 YoY (%)</label>
       <input type="number" class="form-i" id="manM2" placeholder="예: 3.8" step="0.1">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: fred.stlouisfed.org → M2SL → 전년대비 변화율</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/M2SL" target="_blank" style="color:var(--acc3);text-decoration:none">FRED M2SL 바로가기 →</a> (최근값에서 전년비 계산)</div>
     </div>
     <div class="form-g">
       <label class="form-l">HY 스프레드 (%)</label>
       <input type="number" class="form-i" id="manHy" placeholder="예: 3.2" step="0.01">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: fred.stlouisfed.org → BAMLH0A0HYM2</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/BAMLH0A0HYM2" target="_blank" style="color:var(--acc3);text-decoration:none">FRED HY스프레드 바로가기 →</a> (최근값 그대로 입력)</div>
     </div>
     <div class="form-g">
       <label class="form-l">신규 실업수당 청구 (건수)</label>
       <input type="number" class="form-i" id="manClaims" placeholder="예: 218000" step="1000">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: fred.stlouisfed.org → ICSA (매주 목요일 발표)</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">확인: <a href="https://fred.stlouisfed.org/series/ICSA" target="_blank" style="color:var(--acc3);text-decoration:none">FRED ICSA 바로가기 →</a> (매주 목요일 발표, 건수 그대로 입력)</div>
     </div>
     <button class="btn btn-pri" onclick="saveManual()">💾 지표값 저장 (GitHub 반영)</button>
   </div>
