@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-03-17 00:02 KST",
-  "fx_rate": 1490.01,
+  "updated_at": "2026-03-17 00:10 KST",
+  "fx_rate": 1490.54,
   "egg": {
     "stage": 4,
     "score": 4.5,
     "desc": "④ 상승 본격",
     "indicators": {
-      "vix": 24.36,
+      "vix": 24.28,
       "fed_rate": 3.6,
-      "spread": 0.64,
+      "spread": 0.63,
       "cpi_yoy": 2.41,
       "unemp": 4.4,
       "m2_yoy": 4.3,
@@ -18,8 +18,8 @@
     },
     "scoring_details": {
       "fed_rate": "0 (중립 3.6%)",
-      "spread": "+1.5 (정상 0.64%)",
-      "vix": "0 (중립 24.36)",
+      "spread": "+1.5 (정상 0.63%)",
+      "vix": "0 (중립 24.28)",
       "m2_yoy": "0 (중립 4.3%)",
       "cpi_yoy": "+1.5 (저물가 2.41%)",
       "hy_spread": "+1.5 (안정 3.17%)",
@@ -35,16 +35,21 @@
     "base": 800000
   },
   "top_tickers": [
+    "WMT",
     "TXN",
     "KO",
     "CB",
     "PEP",
     "CL",
     "BEN",
-    "SYY",
-    "AFL"
+    "SYY"
   ],
   "rs_ranking": [
+    {
+      "ticker": "WMT",
+      "sector": "필수소비재",
+      "rs": 29.4
+    },
     {
       "ticker": "TXN",
       "sector": "기술",
@@ -79,19 +84,28 @@
       "ticker": "SYY",
       "sector": "필수소비재",
       "rs": 12.15
-    },
-    {
-      "ticker": "AFL",
-      "sector": "금융",
-      "rs": 6.74
     }
   ],
   "stock_data": {
+    "WMT": {
+      "price": 125.04,
+      "prev": 126.25,
+      "change": -1.21,
+      "pct": -0.96,
+      "wr": null,
+      "sector": "필수소비재",
+      "rs": 29.4,
+      "allocation": {
+        "pct": 0,
+        "amount": 0,
+        "signal": "NONE"
+      }
+    },
     "TXN": {
-      "price": 193.46,
+      "price": 193.28,
       "prev": 190.75,
-      "change": 2.71,
-      "pct": 1.42,
+      "change": 2.53,
+      "pct": 1.33,
       "wr": null,
       "sector": "기술",
       "rs": 24.02,
@@ -102,10 +116,10 @@
       }
     },
     "KO": {
-      "price": 78.3,
+      "price": 78.14,
       "prev": 77.25,
-      "change": 1.05,
-      "pct": 1.36,
+      "change": 0.89,
+      "pct": 1.15,
       "wr": null,
       "sector": "필수소비재",
       "rs": 19.63,
@@ -116,10 +130,10 @@
       }
     },
     "CB": {
-      "price": 331.22,
-      "prev": 328.68,
-      "change": 2.54,
-      "pct": 0.77,
+      "price": 331.27,
+      "prev": 333.45,
+      "change": -2.18,
+      "pct": -0.65,
       "wr": null,
       "sector": "금융",
       "rs": 19.56,
@@ -130,10 +144,10 @@
       }
     },
     "PEP": {
-      "price": 159.58,
+      "price": 158.65,
       "prev": 159.2,
-      "change": 0.38,
-      "pct": 0.24,
+      "change": -0.55,
+      "pct": -0.35,
       "wr": null,
       "sector": "필수소비재",
       "rs": 17.63,
@@ -144,10 +158,10 @@
       }
     },
     "CL": {
-      "price": 90.49,
+      "price": 90.22,
       "prev": 88.84,
-      "change": 1.65,
-      "pct": 1.86,
+      "change": 1.38,
+      "pct": 1.56,
       "wr": null,
       "sector": "필수소비재",
       "rs": 16.96,
@@ -158,10 +172,10 @@
       }
     },
     "BEN": {
-      "price": 24.46,
+      "price": 24.47,
       "prev": 24.24,
-      "change": 0.22,
-      "pct": 0.91,
+      "change": 0.23,
+      "pct": 0.93,
       "wr": null,
       "sector": "금융",
       "rs": 13.0,
@@ -172,27 +186,13 @@
       }
     },
     "SYY": {
-      "price": 85.44,
+      "price": 85.21,
       "prev": 84.0,
-      "change": 1.44,
-      "pct": 1.71,
+      "change": 1.21,
+      "pct": 1.43,
       "wr": null,
       "sector": "필수소비재",
       "rs": 12.15,
-      "allocation": {
-        "pct": 0,
-        "amount": 0,
-        "signal": "NONE"
-      }
-    },
-    "AFL": {
-      "price": 109.76,
-      "prev": 108.18,
-      "change": 1.58,
-      "pct": 1.46,
-      "wr": null,
-      "sector": "금융",
-      "rs": 6.74,
       "allocation": {
         "pct": 0,
         "amount": 0,
@@ -207,11 +207,11 @@
       "sector": "기술",
       "shares": 0.1692,
       "avg_price_usd": 191.9,
-      "current_price": 193.46,
-      "current_value_usd": 32.73,
-      "current_value_krw": 48773,
-      "pnl_pct": 0.81,
-      "day_change_pct": 1.42,
+      "current_price": 193.28,
+      "current_value_usd": 32.7,
+      "current_value_krw": 48745,
+      "pnl_pct": 0.72,
+      "day_change_pct": 1.33,
       "wr": null,
       "dividends_usd": 0
     },
@@ -220,19 +220,19 @@
       "sector": "금융",
       "shares": 2.3892,
       "avg_price_usd": 24.2,
-      "current_price": 24.46,
-      "current_value_usd": 58.44,
-      "current_value_krw": 87076,
-      "pnl_pct": 1.07,
-      "day_change_pct": 0.91,
+      "current_price": 24.47,
+      "current_value_usd": 58.46,
+      "current_value_krw": 87143,
+      "pnl_pct": 1.12,
+      "day_change_pct": 0.93,
       "wr": null,
       "dividends_usd": 0
     }
   ],
   "portfolio_summary": {
-    "total_value_usd": 91.17,
-    "total_value_krw": 135844,
-    "total_pnl_pct": 0.98,
+    "total_value_usd": 91.16,
+    "total_value_krw": 135878,
+    "total_pnl_pct": 0.97,
     "total_invested_krw": 20800000
   },
   "benchmarks": {
