@@ -12,6 +12,13 @@
       "avg_price_usd": 191.9,
       "sector": "기술",
       "start_date": "2026-03-16"
+    },
+    {
+      "ticker": "BEN",
+      "shares": 2.3892,
+      "avg_price_usd": 24.2,
+      "sector": "금융",
+      "start_date": "2026-03-16"
     }
   ],
   "transactions": [
@@ -23,6 +30,15 @@
       "price_usd": 191.9,
       "fx": 1496,
       "note": "신호매수 약"
+    },
+    {
+      "date": "2026-03-16",
+      "type": "buy",
+      "ticker": "BEN",
+      "shares": 2.3892,
+      "price_usd": 24.2,
+      "fx": 1496,
+      "note": "신호매수 중"
     }
   ],
   "extra_deposits": [
@@ -34,6 +50,10 @@
   "signal_stages": {
     "TXN": {
       "done": 1,
+      "updated": "2026-03-16"
+    },
+    "BEN": {
+      "done": 2,
       "updated": "2026-03-16"
     }
   },
