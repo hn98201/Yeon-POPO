@@ -673,7 +673,8 @@ def get_weekly_wr(ticker: str, periods: int = 14) -> float | None:
         lo = h['Low'].iloc[-periods:].min()
         cl = h['Close'].iloc[-1]
         if hi == lo: return None
-        return round((hi-cl)/(hi-lo)*-100, 1)
+        result = round((hi-cl)/(hi-lo)*-100, 1)
+        return None if math.isnan(result) else result
     except:
         return None
 
@@ -729,9 +730,15 @@ def months_elapsed(start: str) -> int:
         return max(0,(n.year-s.year)*12+n.month-s.month)
     except: return 0
 
+import math
+
 def serial(obj):
     if hasattr(obj,'tolist'): return obj.tolist()
-    if hasattr(obj,'item'):   return obj.item()
+    if hasattr(obj,'item'):
+        v = obj.item()
+        if isinstance(v, float) and math.isnan(v): return None
+        return v
+    if isinstance(obj, float) and math.isnan(obj): return None
     raise TypeError(type(obj))
 
 # ═══════════════════════════════════════════
