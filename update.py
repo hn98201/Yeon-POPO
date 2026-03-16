@@ -5,7 +5,7 @@
 - 리밸런싱 감지 → 탈락(매도) / 신규 편입 알림
 - 분기 리밸런싱 (1/4/7/10월 첫 실행 시 자동 감지)
 """
-import os, json, time, requests
+import os, json, time, requests, math
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import yfinance as yf
@@ -859,6 +859,16 @@ def main():
         'settings':    {'monthly_budget':MONTHLY_BUDGET,'start_date':START_DATE,
                         'months_elapsed':months_elapsed(START_DATE)},
     }
+    def sanitize(obj):
+        if isinstance(obj, float):
+            return None if (math.isnan(obj) or math.isinf(obj)) else obj
+        if isinstance(obj, dict):
+            return {k: sanitize(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [sanitize(v) for v in obj]
+        return obj
+
+    output = sanitize(output)
     with open('prices.json','w',encoding='utf-8') as f:
         json.dump(output,f,ensure_ascii=False,indent=2,default=serial)
     print("  → prices.json 저장 완료\n")
