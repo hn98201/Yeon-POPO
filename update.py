@@ -291,12 +291,12 @@ def send_indicator_reminder(now) -> bool:
             "→ 내일 워크플로우 실행 시 실업률 자동 반영됨"
         )
     if lines:
-            date_str = now.strftime('%m/%d %a')
-            header = f"⏰ <b>경제지표 업데이트 알림</b> ({date_str}KST)\n━━━━━━━━━━━━━━━\n"
-            tg(header + '\n━━━━━━━━━━━━━━━\n'.join(lines))
-            print(f"  → 지표 리마인더 {len(lines)}건 발송")
-            sent = True
-        return sent
+        date_str = now.strftime('%m/%d %a')
+        header = f"⏰ <b>경제지표 업데이트 알림</b> ({date_str}KST)\n━━━━━━━━━━━━━━━\n"
+        tg(header + '\n━━━━━━━━━━━━━━━\n'.join(lines))
+        print(f"  → 지표 리마인더 {len(lines)}건 발송")
+        sent = True
+    return sent
 
 # ═══════════════════════════════════════════
 # 캐시 / 폴백
