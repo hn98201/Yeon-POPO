@@ -4,6 +4,8 @@ on:
   schedule:
     # 평일 오전 7:30 KST = UTC 22:30 (전날)
     - cron: '30 22 * * 1-5'
+    # 평일 오전 9:00 KST = UTC 00:00 (지표 리마인더)
+    - cron: '0 0 * * 1-5'
     # 평일 오후 11:00 KST = UTC 14:00
     - cron: '0 14 * * 1-5'
   workflow_dispatch:
@@ -20,7 +22,7 @@ jobs:
       - name: Checkout (최신 portfolio.json 포함)
         uses: actions/checkout@v4
         with:
-          ref: main          # 항상 최신 브랜치 기준 (수동 저장 반영)
+          ref: main
           fetch-depth: 1
 
       - name: Python 설정
