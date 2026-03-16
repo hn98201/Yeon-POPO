@@ -888,5 +888,4 @@ def main():
     print("🎉 모든 작업 완료!")
 
 if __name__ == '__main__':
-    tg("✅ 텔레그램 연결 테스트 성공!")
     main()
