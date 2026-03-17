@@ -56,10 +56,12 @@ STAGE_SECTORS = {
 # WR 단계 정의
 # ═══════════════════════════════════════════
 def wr_level(wr):
-    if wr is None or wr > -60: return 0
-    if wr > -70:               return 1  # -60 ~ -70: 약매수
-    if wr > -85:               return 2  # -70 ~ -85: 중매수
-    return 3                             # -85 이하: 강매수
+    if wr is None: return 0
+    if isinstance(wr, float) and (math.isnan(wr) or math.isinf(wr)): return 0
+    if wr > -60: return 0
+    if wr > -70: return 1  # -60 ~ -70: 약매수
+    if wr > -85: return 2  # -70 ~ -85: 중매수
+    return 3               # -85 이하: 강매수
 
 WR_LEVEL_LABEL = {
     0: None,
@@ -209,6 +211,143 @@ def send_daily_summary(egg, budget, signals, fx):
         "매수 신호: 없음",
     ]
     tg('\n'.join(lines))
+
+# ═══════════════════════════════════════════
+# 달걀 단계 변화 감지 및 알림
+# ═══════════════════════════════════════════
+def detect_egg_change(prev: dict, egg: dict) -> bool:
+    prev_stage = prev.get('egg', {}).get('stage')
+    new_stage  = egg.get('stage')
+    return prev_stage is not None and prev_stage != new_stage
+
+def send_egg_change_alert(prev: dict, egg: dict, budget: dict, fx: float):
+    prev_stage = prev.get('egg', {}).get('stage', '?')
+    new_stage  = egg['stage']
+    prev_desc  = prev.get('egg', {}).get('desc', '')
+    new_desc   = egg['desc']
+    direction  = '📈' if new_stage > prev_stage else '📉'
+    stage_sectors = {
+        1: '필수소비재 · 헬스케어 · 유틸리티',
+        2: '필수소비재 · 헬스케어 · 유틸리티',
+        3: '금융 · 산업재 · 소재',
+        4: '기술 · 경기소비재 · 금융',
+        5: '헬스케어 · 경기소비재 · 기술',
+        6: '에너지 · 소재 · 산업재',
+    }
+    lines = [
+        f"{direction} <b>달걀 단계 변화!</b>",
+        f"{prev_stage}단계 ({prev_desc}) → <b>{new_stage}단계 ({new_desc})</b>",
+        f"종합 점수: {egg['score']}점",
+        "━━━━━━━━━━━━━━━━━",
+        f"▶ 선호 섹터: {stage_sectors.get(new_stage, '--')}",
+        f"▶ 이번 달 예산: ₩{budget['amount']:,} ({budget['reason']})",
+        f"▶ 환율: ₩{fx:,.0f}",
+        "━━━━━━━━━━━━━━━━━",
+        "📌 RS 모멘텀 Top8 및 섹터 배분이 자동 재계산됩니다.",
+    ]
+    tg('\n'.join(lines))
+    print(f"  → 달걀 단계 변화 알림 ({prev_stage}→{new_stage}단계)")
+
+# ═══════════════════════════════════════════
+# 자동 지표 임계값 알림
+# ═══════════════════════════════════════════
+def send_indicator_threshold_alerts(prev: dict, ind: dict):
+    prev_ind = prev.get('egg', {}).get('indicators', {})
+    alerts   = []
+
+    # 장단기 스프레드 역전/정상화
+    prev_sp = prev_ind.get('spread')
+    new_sp  = ind.get('spread')
+    if prev_sp is not None and new_sp is not None:
+        if prev_sp >= 0 and new_sp < 0:
+            alerts.append(
+                "⚠️ <b>[경보] 장단기 스프레드 역전!</b>\n"
+                f"이전: +{prev_sp:.2f}% → 현재: {new_sp:.2f}%\n"
+                "경기 침체 선행 신호입니다. 포트폴리오 점검 권장."
+            )
+        elif prev_sp < 0 and new_sp >= 0:
+            alerts.append(
+                "✅ <b>[정상화] 장단기 스프레드 역전 해소</b>\n"
+                f"이전: {prev_sp:.2f}% → 현재: +{new_sp:.2f}%\n"
+                "침체 신호 완화. 경기 회복 기대감 증가."
+            )
+
+    # CPI 임계값
+    prev_cpi = prev_ind.get('cpi_yoy')
+    new_cpi  = ind.get('cpi_yoy')
+    if prev_cpi is not None and new_cpi is not None:
+        if prev_cpi < 3.0 and new_cpi >= 3.0:
+            alerts.append(
+                f"🔴 <b>[경보] CPI 3% 돌파!</b>\n"
+                f"이전: {prev_cpi:.2f}% → 현재: {new_cpi:.2f}%\n"
+                "인플레이션 재가속. 금리 인하 지연 가능성."
+            )
+        elif prev_cpi >= 3.0 and new_cpi < 3.0:
+            alerts.append(
+                f"✅ <b>[안정] CPI 3% 이하 복귀</b>\n"
+                f"이전: {prev_cpi:.2f}% → 현재: {new_cpi:.2f}%\n"
+                "물가 안정화 진행 중."
+            )
+        elif prev_cpi > 2.5 and new_cpi <= 2.5:
+            alerts.append(
+                f"🟢 <b>[호재] CPI 2.5% 이하 진입</b>\n"
+                f"이전: {prev_cpi:.2f}% → 현재: {new_cpi:.2f}%\n"
+                "목표 물가 근접. 금리 인하 기대 상승."
+            )
+
+    # 실업률 임계값
+    prev_ur = prev_ind.get('unemp')
+    new_ur  = ind.get('unemp')
+    if prev_ur is not None and new_ur is not None:
+        if prev_ur < 4.5 and new_ur >= 4.5:
+            alerts.append(
+                f"🔴 <b>[경보] 실업률 4.5% 돌파!</b>\n"
+                f"이전: {prev_ur:.1f}% → 현재: {new_ur:.1f}%\n"
+                "고용 악화 신호. 달걀이론 하락 방향 주의."
+            )
+        elif prev_ur >= 4.5 and new_ur < 4.5:
+            alerts.append(
+                f"✅ <b>[개선] 실업률 4.5% 이하 복귀</b>\n"
+                f"이전: {prev_ur:.1f}% → 현재: {new_ur:.1f}%\n"
+                "고용 개선 신호."
+            )
+
+    for msg in alerts:
+        tg(msg)
+    if alerts:
+        print(f"  → 지표 임계값 알림 {len(alerts)}건 발송")
+
+# ═══════════════════════════════════════════
+# 금요일 WR 신호 요약 알림
+# ═══════════════════════════════════════════
+def send_friday_wr_summary(signals: list, egg: dict, budget: dict, fx: float, rs_ranking: list):
+    now = datetime.now(KST)
+    if now.weekday() != 4 or not (7 <= now.hour <= 8):
+        return
+    lines = [
+        f"📅 <b>금요일 WR 매수 신호 요약</b>",
+        f"달걀 {egg['stage']}단계 | {egg['desc']}",
+        f"이번 달 예산: ₩{budget['amount']:,}",
+        f"환율: ₩{fx:,.0f}",
+        "━━━━━━━━━━━━━━━━━",
+    ]
+    if signals:
+        for s in signals:
+            icon = "🔴" if s['allocation']['signal']=='STRONG' else "🟡" if s['allocation']['signal']=='MEDIUM' else "🟢"
+            wr_str = f"{s['wr']:.1f}" if s.get('wr') else "--"
+            lines.append(f"{icon} <b>{s['ticker']}</b> ${s.get('price',0):.2f} | WR {wr_str} | ₩{s['allocation']['amount']:,}")
+        lines += [
+            "━━━━━━━━━━━━━━━━━",
+            "📌 오늘 매수 후 앱 거래탭에 기록해주세요.",
+        ]
+    else:
+        lines += [
+            "현재 매수 신호 없음 (WR ≤ -60 미충족)",
+            "━━━━━━━━━━━━━━━━━",
+            "📌 현금 보유 유지. 다음 주 신호를 기다리세요.",
+        ]
+    tg('\n'.join(lines))
+    print(f"  → 금요일 WR 요약 알림 발송 (신호 {len(signals)}개)")
 
 # ═══════════════════════════════════════════
 # 지표 업데이트 리마인더
@@ -807,25 +946,41 @@ def main():
     # ══ 텔레그램 알림 발송 ══
     print("[알림] 텔레그램 발송...")
 
+    # 1순위: 달걀 단계 변화 (언제든)
+    if detect_egg_change(prev, egg):
+        send_egg_change_alert(prev, egg, budget, fx)
+
+    # 2순위: WR 단계 변화 (언제든)
     if wr_changes:
         send_wr_alerts(wr_changes, fx, egg['stage'], budget)
 
+    # 3순위: 리밸런싱 (분기)
     if do_rb:
         send_rebalancing_alert(rb, egg['stage'], rs_ranking)
 
-    if signals and not wr_changes and 7 <= now.hour <= 10:
+    # 4순위: 자동 지표 임계값 알림 (언제든)
+    send_indicator_threshold_alerts(prev, ind)
+
+    # 5순위: 금요일 7시 WR 신호 요약
+    send_friday_wr_summary(signals, egg, budget, fx, rs_ranking)
+
+    # 6순위: 기존 신호 유지 요약 (오전, 금요일 제외)
+    if signals and not wr_changes and 7 <= now.hour <= 10 and now.weekday() != 4:
         sig_lines = [
             f"🔔 <b>달걀이론 기존 매수 신호 유지</b>",
             f"달걀 {egg['stage']}단계 | ₩{budget['amount']:,}",
         ]
         for s in signals:
             icon = "🔴" if s['allocation']['signal'] == 'STRONG' else "🟡" if s['allocation']['signal'] == 'MEDIUM' else "🟢"
-            sig_lines.append(f"{icon} <b>{s['ticker']}</b> WR {s['wr']:.1f} | ₩{s['allocation']['amount']:,}")
+            wr_str = f"{s['wr']:.1f}" if s.get('wr') else "--"
+            sig_lines.append(f"{icon} <b>{s['ticker']}</b> WR {wr_str} | ₩{s['allocation']['amount']:,}")
         tg('\n'.join(sig_lines))
 
+    # 7순위: 신호 없을 때 오전 일일 요약
     if not signals and not wr_changes and 7 <= now.hour <= 10:
         send_daily_summary(egg, budget, signals, fx)
 
+    # 8순위: 지표 업데이트 리마인더
     send_indicator_reminder(now)
 
     print("🎉 모든 작업 완료!")
