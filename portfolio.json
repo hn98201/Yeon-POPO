@@ -15,8 +15,8 @@
     },
     {
       "ticker": "BEN",
-      "shares": 2.3892,
-      "avg_price_usd": 24.2,
+      "shares": 4.225012,
+      "avg_price_usd": 24.386839507201397,
       "sector": "금융",
       "start_date": "2026-03-16"
     },
@@ -55,6 +55,15 @@
       "price_usd": 109.86,
       "fx": 1498,
       "note": "신호매수 약"
+    },
+    {
+      "date": "2026-03-17",
+      "type": "buy",
+      "ticker": "BEN",
+      "shares": 1.835812,
+      "price_usd": 24.63,
+      "fx": 1499,
+      "note": "Wr72"
     }
   ],
   "extra_deposits": [
