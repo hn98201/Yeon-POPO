@@ -350,10 +350,11 @@ body{padding-bottom:72px}
   </div>
 
   <div class="card" id="budgetSigCard"></div>
+  <div id="rbCard" style="display:none"></div>
   <div id="sigList"><div class="loader"><div class="spin"></div></div></div>
 
   <div class="card" style="margin-top:4px">
-    <div class="card-t">RS 선정 30종목</div>
+    <div class="card-t">RS 선정 종목</div>
     <div id="top30List" style="display:flex;flex-wrap:wrap;gap:5px"></div>
   </div>
   <div class="card">
@@ -777,13 +778,15 @@ function sectorWeight(ticker, stage) {
 }
 
 function totalAllocTicker(ticker) {
-  const { total, monthly, initial, months, extra } = totalBudget();
-  const stage = (S.data && S.data.egg && S.data.egg.stage) || 3;
-  const top = (S.data && S.data.top_tickers) || Object.keys(NOBL).slice(0, 8);
-  const totalW = top.reduce((a, t) => a + sectorWeight(t, stage), 0);
-  if (!totalW) return 0;
-  const ratio = sectorWeight(ticker, stage) / totalW;
-  return Math.round(total * ratio);
+  if (!S.pf || !S.data) return 0;
+  const { monthly, months } = totalBudget();
+  if (!months) return 0;
+  const bud = (S.data.budget && S.data.budget.amount) || monthly;
+  const base = Math.round(bud / 8);
+  // 리밸런싱 이월 보너스 반영
+  const stg = S.pf.signal_stages && S.pf.signal_stages[ticker];
+  const bonus = (stg && stg.bonus) ? stg.bonus : 0;
+  return base + bonus;
 }
 
 function mergedHoldings() {
@@ -1071,9 +1074,130 @@ function renderHoldingsChart() {
 // ═══════════════════════════════════════
 // RENDER: SIGNALS
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// 리밸런싱 감지 및 원클릭 처리
+// ═══════════════════════════════════════
+function detectRebalancing() {
+  const d = S.data;
+  if (!d) return null;
+  const prev = S.pf._prev_top || [];
+  const curr = d.top_tickers || [];
+  if (!prev.length) return null;
+  const dropped = prev.filter(t => !curr.includes(t));
+  const added   = curr.filter(t => !prev.includes(t));
+  if (!dropped.length && !added.length) return null;
+  return { dropped, added };
+}
+
+function renderRbCard() {
+  const rb = detectRebalancing();
+  const el = document.getElementById('rbCard');
+  if (!rb) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const invMap = investedByTicker();
+  const { monthly, months } = totalBudget();
+  const bud = (S.data && S.data.budget && S.data.budget.amount) || monthly;
+  const perTicker = Math.round(bud / 8);
+
+  let droppedRows = rb.dropped.map(t => {
+    const alloc = totalAllocTicker(t);
+    const inv   = invMap[t] || 0;
+    const surplus = Math.max(0, alloc - inv);
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--red)">${t}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:6px">탈락</span>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--yellow);font-family:var(--mono)">잉여 ₩${fmt(surplus)}</div>
+        <div style="font-size:10px;color:var(--text3)">배정 ₩${fmt(alloc)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let addedRows = rb.added.map(t => {
+    const rs = (S.data.rs_ranking || []).find(r => r.ticker === t);
+    const rsStr = rs ? ` RS +${rs.rs.toFixed(1)}%` : '';
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--green)">${t}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:6px">신규${rsStr}</span>
+      </div>
+      <div style="font-size:11px;color:var(--acc);font-family:var(--mono)">₩${fmt(perTicker)} 배정예정</div>
+    </div>`;
+  }).join('');
+
+  // 이월 잉여현금 계산
+  const totalSurplus = rb.dropped.reduce((s, t) => {
+    const alloc = totalAllocTicker(t);
+    const inv   = invMap[t] || 0;
+    return s + Math.max(0, alloc - inv);
+  }, 0);
+
+  el.innerHTML = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:16px;margin-bottom:10px">
+    <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px">🔄 분기 리밸런싱 감지</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">▼ Top8 탈락 종목</div>
+    ${droppedRows}
+    <div style="font-size:11px;color:var(--text3);margin:10px 0 8px">▲ Top8 신규 편입</div>
+    ${addedRows}
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px;margin-top:12px">
+      <div style="font-size:11px;color:var(--text2)">탈락 종목 잉여현금 합계</div>
+      <div style="font-size:18px;font-weight:700;color:var(--yellow);font-family:var(--mono)">₩${fmt(Math.round(totalSurplus))}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">신규 종목으로 자동 이월됩니다</div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:12px;background:linear-gradient(90deg,#d97706,#f59e0b);color:#000;font-weight:700"
+      onclick="execRebalancing()">✅ 리밸런싱 배정금 실행</button>
+    <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">
+      실제 매도/매수는 증권사에서 직접 실행하세요
+    </div>
+  </div>`;
+}
+
+async function execRebalancing() {
+  const rb = detectRebalancing();
+  if (!rb) return;
+  const invMap  = investedByTicker();
+  const { monthly } = totalBudget();
+  const bud = (S.data && S.data.budget && S.data.budget.amount) || monthly;
+  const perTicker = Math.round(bud / 8);
+  const today = new Date().toISOString().slice(0,10);
+
+  // 탈락 종목 잉여현금 계산
+  let totalSurplus = 0;
+  rb.dropped.forEach(t => {
+    const alloc = totalAllocTicker(t);
+    const inv   = invMap[t] || 0;
+    totalSurplus += Math.max(0, alloc - inv);
+  });
+
+  // 신규 종목별 이월 금액 배분
+  const bonusPerNew = rb.added.length > 0 ? Math.round(totalSurplus / rb.added.length) : 0;
+
+  // signal_stages에서 탈락 종목 제거
+  rb.dropped.forEach(t => {
+    if (S.pf.signal_stages) delete S.pf.signal_stages[t];
+  });
+
+  // 신규 종목 signal_stages 초기화
+  rb.added.forEach(t => {
+    S.pf.signal_stages = S.pf.signal_stages || {};
+    S.pf.signal_stages[t] = { done: 0, updated: today, bonus: bonusPerNew };
+  });
+
+  // prev_top 갱신
+  S.pf._prev_top = [...(S.data.top_tickers || [])];
+
+  await savePortfolio();
+  renderRbCard();
+  renderSig();
+  alert(`리밸런싱 완료!\n이월 잉여현금: ₩${fmt(Math.round(totalSurplus))}\n신규 종목당 추가 배정: ₩${fmt(bonusPerNew)}`);
+}
+
 function renderSig() {
   const d = S.data;
   if (!d) return;
+  renderRbCard();
   const sigs = d.signals || [];
   const { total:bTotal, monthly, months } = totalBudget();
   const bud = d.budget || {};
