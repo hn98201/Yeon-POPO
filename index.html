@@ -1598,9 +1598,16 @@ function onTxType() {
   }
 }
 
+// 고정 감시 종목 (NOBL 외)
+const WATCH = { 'JOBY': 'UAM' };
+
 function fillTickerSel() {
-  document.getElementById('txTicker').innerHTML = Object.keys(NOBL).sort()
-    .map(t => `<option value="${t}">${t} (${NOBL[t]})</option>`).join('');
+  const allTickers = {
+    ...NOBL,
+    ...Object.fromEntries(Object.entries(WATCH).map(([k,v]) => [k, v + ' (고정감시)']))
+  };
+  document.getElementById('txTicker').innerHTML = Object.keys(allTickers).sort()
+    .map(t => `<option value="${t}">${t} (${allTickers[t]})</option>`).join('');
 }
 
 async function submitTx() {
