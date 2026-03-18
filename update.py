@@ -1,10 +1,11 @@
 """
-선행형 매크로-모멘텀 자동 투자 시스템 v3.1
+선행형 매크로-모멘텀 자동 투자 시스템 v3.2
 - FRED 완전 제거 → yfinance + BLS API
 - WR 단계 변화 알림 (-60/-70/-85 진입 시 각각 발송)
 - 리밸런싱 감지 → 탈락(매도) / 신규 편입 알림
 - 분기 리밸런싱 (1/4/7/10월 첫 실행 시 자동 감지)
 - NaN/Inf JSON 직렬화 오류 완전 수정
+- JOBY 고정 감시 종목 추가 (배정금 없음, WR 신호만)
 """
 import os, json, time, requests, math
 from datetime import datetime
@@ -18,6 +19,13 @@ TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
 TELEGRAM_CHAT  = os.environ.get('TELEGRAM_CHAT_ID', '')
 MONTHLY_BUDGET = int(os.environ.get('MONTHLY_BUDGET', '800000'))
 START_DATE     = os.environ.get('START_DATE', '2024-01-01')
+
+# ═══════════════════════════════════════════
+# 고정 감시 종목 (Top8 외 별도 WR 감시)
+# ═══════════════════════════════════════════
+WATCH_TICKERS = {
+    'JOBY': 'UAM',   # 배정금 없음, WR 신호만
+}
 
 # ═══════════════════════════════════════════
 # NOBL 유니버스
@@ -124,6 +132,9 @@ def detect_wr_changes(prev: dict, new_stock_data: dict) -> list:
     changes = []
     prev_stock = prev.get('stock_data', {})
     for ticker, data in new_stock_data.items():
+        # JOBY 고정 감시 종목은 WR 변화 알림에서 제외 (별도 알림)
+        if ticker in WATCH_TICKERS:
+            continue
         wr_new = data.get('wr')
         new_lv = wr_level(wr_new)
         if new_lv == 0:
@@ -255,7 +266,6 @@ def send_indicator_threshold_alerts(prev: dict, ind: dict):
     prev_ind = prev.get('egg', {}).get('indicators', {})
     alerts   = []
 
-    # 장단기 스프레드 역전/정상화
     prev_sp = prev_ind.get('spread')
     new_sp  = ind.get('spread')
     if prev_sp is not None and new_sp is not None:
@@ -272,7 +282,6 @@ def send_indicator_threshold_alerts(prev: dict, ind: dict):
                 "침체 신호 완화. 경기 회복 기대감 증가."
             )
 
-    # CPI 임계값
     prev_cpi = prev_ind.get('cpi_yoy')
     new_cpi  = ind.get('cpi_yoy')
     if prev_cpi is not None and new_cpi is not None:
@@ -295,7 +304,6 @@ def send_indicator_threshold_alerts(prev: dict, ind: dict):
                 "목표 물가 근접. 금리 인하 기대 상승."
             )
 
-    # 실업률 임계값
     prev_ur = prev_ind.get('unemp')
     new_ur  = ind.get('unemp')
     if prev_ur is not None and new_ur is not None:
@@ -318,9 +326,10 @@ def send_indicator_threshold_alerts(prev: dict, ind: dict):
         print(f"  → 지표 임계값 알림 {len(alerts)}건 발송")
 
 # ═══════════════════════════════════════════
-# 금요일 WR 신호 요약 알림
+# 금요일 WR 신호 요약 알림 (JOBY 포함)
 # ═══════════════════════════════════════════
-def send_friday_wr_summary(signals: list, egg: dict, budget: dict, fx: float, rs_ranking: list):
+def send_friday_wr_summary(signals: list, egg: dict, budget: dict, fx: float,
+                           rs_ranking: list, watch_data: dict = None):
     now = datetime.now(KST)
     if now.weekday() != 4 or not (7 <= now.hour <= 8):
         return
@@ -336,18 +345,34 @@ def send_friday_wr_summary(signals: list, egg: dict, budget: dict, fx: float, rs
             icon = "🔴" if s['allocation']['signal']=='STRONG' else "🟡" if s['allocation']['signal']=='MEDIUM' else "🟢"
             wr_str = f"{s['wr']:.1f}" if s.get('wr') else "--"
             lines.append(f"{icon} <b>{s['ticker']}</b> ${s.get('price',0):.2f} | WR {wr_str} | ₩{s['allocation']['amount']:,}")
-        lines += [
-            "━━━━━━━━━━━━━━━━━",
-            "📌 오늘 매수 후 앱 거래탭에 기록해주세요.",
-        ]
     else:
-        lines += [
-            "현재 매수 신호 없음 (WR ≤ -60 미충족)",
-            "━━━━━━━━━━━━━━━━━",
-            "📌 현금 보유 유지. 다음 주 신호를 기다리세요.",
-        ]
+        lines.append("현재 매수 신호 없음 (WR ≤ -60 미충족)")
+
+    # ── 고정 감시 종목 신호 (JOBY 등)
+    if watch_data:
+        lines.append("━━━━━━━━━━━━━━━━━")
+        lines.append("✈️ <b>고정 감시 종목</b>")
+        for ticker, data in watch_data.items():
+            w_wr  = data.get('wr')
+            w_lv  = wr_level(w_wr)
+            w_lbl = WR_LEVEL_LABEL.get(w_lv)
+            wr_str = f"{w_wr:.1f}" if w_wr is not None else "--"
+            sector = WATCH_TICKERS.get(ticker, '--')
+            if w_lbl:
+                icon = "🔴" if w_lv==3 else "🟡" if w_lv==2 else "🟢"
+                lines.append(
+                    f"{icon} <b>{ticker}</b> ({sector}) ${data.get('price',0):.2f} | WR {wr_str}\n"
+                    f"   {w_lbl} — 배정금 없음 · 자율 매수"
+                )
+            else:
+                lines.append(f"  • <b>{ticker}</b> ({sector}) ${data.get('price',0):.2f} | WR {wr_str} | 신호없음")
+
+    lines += [
+        "━━━━━━━━━━━━━━━━━",
+        "📌 오늘 매수 후 앱 거래탭에 기록해주세요.",
+    ]
     tg('\n'.join(lines))
-    print(f"  → 금요일 WR 요약 알림 발송 (신호 {len(signals)}개)")
+    print(f"  → 금요일 WR 요약 알림 발송 (신호 {len(signals)}개 + 감시 {len(watch_data or {})}개)")
 
 # ═══════════════════════════════════════════
 # 지표 업데이트 리마인더
@@ -363,7 +388,6 @@ def send_indicator_reminder(now) -> bool:
     lines = []
     mo = load_manual_overrides()
 
-    # ① 매주 금요일: 신규실업청구
     if weekday == 4:
         claims_val = mo.get('claims', '없음')
         lines.append(
@@ -373,7 +397,6 @@ def send_indicator_reminder(now) -> bool:
             f"현재 저장값: {claims_val}건"
         )
 
-    # ② 매주 월요일: HY 스프레드
     if weekday == 0:
         hy_val = mo.get('hy_spread', 'VIX추정')
         lines.append(
@@ -382,7 +405,6 @@ def send_indicator_reminder(now) -> bool:
             f"현재 저장값: {hy_val}%"
         )
 
-    # ③ 매월 26~28일: M2
     if 26 <= day <= 28 and weekday in [0, 1, 2]:
         m2_val = mo.get('m2_yoy', '없음')
         lines.append(
@@ -391,7 +413,6 @@ def send_indicator_reminder(now) -> bool:
             f"현재 저장값: {m2_val}%"
         )
 
-    # ④ 매월 둘째 주 수요일: CPI
     if weekday == 2 and 8 <= day <= 14:
         lines.append(
             "ℹ️ <b>[월간] CPI 발표일</b>\n"
@@ -399,7 +420,6 @@ def send_indicator_reminder(now) -> bool:
             "→ 내일 워크플로우 실행 시 자동 반영됨"
         )
 
-    # ⑤ 매월 첫째 주 금요일: 고용지표
     if weekday == 4 and day <= 7:
         lines.append(
             "ℹ️ <b>[월간] 고용 지표 발표일</b>\n"
@@ -443,7 +463,7 @@ def bls_fetch(series_id: str) -> list | None:
     try:
         r = requests.get(
             f"https://api.bls.gov/publicAPI/v1/timeseries/data/{series_id}",
-            timeout=20, headers={'User-Agent': 'egg-portfolio/3.1'}
+            timeout=20, headers={'User-Agent': 'egg-portfolio/3.2'}
         )
         d = r.json()
         if d.get('status') == 'REQUEST_SUCCEEDED':
@@ -465,7 +485,6 @@ def get_economic_indicators() -> dict:
         if cache.get(key) is not None: return cache[key]
         return default
 
-    # ① VIX
     if ov.get('vix') is not None:
         ind['vix'] = ov['vix']
         print(f"    vix         = {ind['vix']} (수동입력)")
@@ -476,14 +495,12 @@ def get_economic_indicators() -> dict:
             ind['vix'] = co('vix', 18.0)
         print(f"    vix         = {ind['vix']}")
 
-    # ② 기준금리 (^IRX)
     try:
         ind['fed_rate'] = round(yf.Ticker('^IRX').fast_info.last_price, 2)
     except:
         ind['fed_rate'] = co('fed_rate', 4.5)
     print(f"    fed_rate    = {ind['fed_rate']}%")
 
-    # ③ 장단기 스프레드 (10Y - 3M)
     try:
         t10 = yf.Ticker('^TNX').fast_info.last_price
         ind['spread'] = round(t10 - ind['fed_rate'], 2) if t10 else co('spread', 0.2)
@@ -493,7 +510,6 @@ def get_economic_indicators() -> dict:
 
     time.sleep(0.5)
 
-    # ④ CPI YoY
     if ov.get('cpi_yoy') is not None:
         ind['cpi_yoy'] = ov['cpi_yoy']
         print(f"    cpi_yoy     = {ind['cpi_yoy']}% (수동입력)")
@@ -516,7 +532,6 @@ def get_economic_indicators() -> dict:
             ind['cpi_yoy'] = co('cpi_yoy')
         print(f"    cpi_yoy     = {ind['cpi_yoy']}%")
 
-    # ⑤ 실업률
     if ov.get('unemp') is not None:
         ind['unemp'] = ov['unemp']
         print(f"    unemp       = {ind['unemp']}% (수동입력)")
@@ -536,7 +551,6 @@ def get_economic_indicators() -> dict:
             ind['unemp'] = co('unemp')
         print(f"    unemp       = {ind['unemp']}%")
 
-    # ⑥ M2
     if ov.get('m2_yoy') is not None:
         ind['m2_yoy'] = ov['m2_yoy']
         print(f"    m2_yoy      = {ind['m2_yoy']}% (수동입력)")
@@ -544,7 +558,6 @@ def get_economic_indicators() -> dict:
         ind['m2_yoy'] = co('m2_yoy', 3.5)
         print(f"    m2_yoy      = {ind['m2_yoy']}% (캐시)")
 
-    # ⑦ HY 스프레드
     if ov.get('hy_spread') is not None:
         ind['hy_spread'] = ov['hy_spread']
         print(f"    hy_spread   = {ind['hy_spread']}% (수동입력)")
@@ -556,14 +569,12 @@ def get_economic_indicators() -> dict:
         )
         print(f"    hy_spread   = {ind['hy_spread']}% (VIX추정)")
 
-    # ⑧ 소비자심리 (다중 소스)
     if ov.get('pmi') is not None:
         ind['pmi'] = ov['pmi']
         print(f"    pmi         = {ind['pmi']} (수동입력)")
     else:
         pmi_val = None
 
-        # 방법1: FRED CSV
         if pmi_val is None:
             try:
                 r = requests.get(
@@ -584,7 +595,6 @@ def get_economic_indicators() -> dict:
             except Exception as e:
                 print(f"    FRED CSV 실패: {e}")
 
-        # 방법2: UMICH 직접
         if pmi_val is None:
             for url in [
                 "https://data.sca.isr.umich.edu/get-chart.php?r=1&t=tbmics&f=csv",
@@ -613,7 +623,6 @@ def get_economic_indicators() -> dict:
                 except Exception as e:
                     print(f"    UMICH 실패: {e}")
 
-        # 캐시 폴백
         if pmi_val is None:
             pmi_val = co('pmi', 56.6)
             print(f"    pmi(캐시폴백) = {pmi_val}")
@@ -621,7 +630,6 @@ def get_economic_indicators() -> dict:
         ind['pmi'] = pmi_val
         print(f"    pmi         = {ind['pmi']}")
 
-    # ⑨ 신규실업청구
     ind['claims'] = int(co('claims', 220000))
     print(f"    claims      = {ind['claims']:,} ({'수동' if ov.get('claims') else '캐시'})")
 
@@ -860,14 +868,37 @@ def main():
             'allocation': alloc,
         }
         print(f"  {t:6} ${p['price']:>8.2f} | WR {str(wr):>7} | {alloc['signal']}")
+
+    # ── 고정 감시 종목 (JOBY 등) WR 계산
+    print()
+    watch_data = {}
+    for w_ticker, w_sector in WATCH_TICKERS.items():
+        time.sleep(0.4)
+        w_p  = get_price(w_ticker)
+        w_wr = get_weekly_wr(w_ticker)
+        w_lv = wr_level(w_wr)
+        w_lbl = WR_LEVEL_LABEL.get(w_lv) or '신호없음'
+        watch_data[w_ticker] = {
+            **w_p,
+            'wr':     w_wr,
+            'sector': w_sector,
+            'rs':     None,
+            'fixed':  True,
+            'allocation': {'pct': 0, 'amount': 0, 'signal': 'NONE'},
+        }
+        # stock_data에도 포함 (보유종목 자산가치 계산용)
+        stock_data[w_ticker] = watch_data[w_ticker]
+        print(f"  {w_ticker:6} ${w_p['price']:>8.2f} | WR {str(w_wr):>7} | {w_lbl} [고정감시]")
     print()
 
+    # 신호 목록 (고정 감시 종목 제외 — 배정금 없음)
     signals = sorted(
         [{'ticker': t, 'sector': NOBL_UNIVERSE.get(t, '--'), **v}
-         for t, v in stock_data.items() if v['allocation']['signal'] != 'NONE'],
+         for t, v in stock_data.items()
+         if v['allocation']['signal'] != 'NONE' and t not in WATCH_TICKERS],
         key=lambda x: x.get('wr') or 0
     )
-    print(f"[6/8] 현재 신호: {len(signals)}개\n")
+    print(f"[6/8] 현재 신호: {len(signals)}개 (고정감시 {len(watch_data)}개 별도)\n")
 
     print("[6-1] WR 단계 변화 감지...")
     wr_changes = detect_wr_changes(prev, stock_data)
@@ -892,9 +923,11 @@ def main():
                 avg = h.get('avg_price_usd', 0)
                 sh  = h.get('shares', 0)
                 wr  = stock_data.get(t, {}).get('wr') or get_weekly_wr(t)
+                # 고정 감시 종목 여부 표시
+                is_fixed = t in WATCH_TICKERS
                 holdings.append({
                     'ticker':             t,
-                    'sector':             h.get('sector', NOBL_UNIVERSE.get(t, '--')),
+                    'sector':             h.get('sector', NOBL_UNIVERSE.get(t, WATCH_TICKERS.get(t, '--'))),
                     'shares':             sh,
                     'avg_price_usd':      avg,
                     'current_price':      cur,
@@ -904,6 +937,7 @@ def main():
                     'day_change_pct':     p.get('pct', 0),
                     'wr':                 wr,
                     'dividends_usd':      h.get('dividends_received_usd', 0),
+                    'fixed_watch':        is_fixed,
                 })
             tusd = sum(h['current_value_usd'] for h in holdings)
             cost = sum(h['shares'] * h['avg_price_usd'] for h in holdings)
@@ -926,6 +960,7 @@ def main():
         'top_tickers':    top_tickers,
         'rs_ranking':     rs_ranking,
         'stock_data':     stock_data,
+        'watch_data':     watch_data,       # 고정 감시 종목 별도 저장
         'signals':        signals,
         'holdings':       holdings,
         'portfolio_summary': ps,
@@ -937,7 +972,6 @@ def main():
         },
     }
 
-    # NaN/Inf 완전 제거 후 저장
     output = sanitize(output)
     with open('prices.json', 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2, default=serial)
@@ -950,7 +984,7 @@ def main():
     if detect_egg_change(prev, egg):
         send_egg_change_alert(prev, egg, budget, fx)
 
-    # 2순위: WR 단계 변화 (언제든)
+    # 2순위: WR 단계 변화 (언제든, JOBY 제외)
     if wr_changes:
         send_wr_alerts(wr_changes, fx, egg['stage'], budget)
 
@@ -961,8 +995,8 @@ def main():
     # 4순위: 자동 지표 임계값 알림 (언제든)
     send_indicator_threshold_alerts(prev, ind)
 
-    # 5순위: 금요일 7시 WR 신호 요약
-    send_friday_wr_summary(signals, egg, budget, fx, rs_ranking)
+    # 5순위: 금요일 7시 WR 신호 요약 (JOBY 포함)
+    send_friday_wr_summary(signals, egg, budget, fx, rs_ranking, watch_data=watch_data)
 
     # 6순위: 기존 신호 유지 요약 (오전, 금요일 제외)
     if signals and not wr_changes and 7 <= now.hour <= 10 and now.weekday() != 4:
