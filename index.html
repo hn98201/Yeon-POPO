@@ -1258,6 +1258,38 @@ async function execRebalancing() {
   alert(`리밸런싱 완료!\n이월 잉여현금: ₩${fmt(Math.round(totalSurplus))}\n신규 종목당 추가 배정: ₩${fmt(bonusPerNew)}`);
 }
 
+// ── WR 레벨 계산 (JS 버전)
+function wr_level_js(wr) {
+  if (wr == null || isNaN(wr)) return 0;
+  if (wr > -60) return 0;
+  if (wr > -70) return 1;
+  if (wr > -85) return 2;
+  return 3;
+}
+
+// ── JOBY 고정 감시 종목 매수 모달
+function openJobyModal() {
+  const d = S.data;
+  const joby = d && d.stock_data && d.stock_data['JOBY'];
+  S.modal.ticker = 'JOBY';
+  S.modal.level  = wr_level_js(joby && joby.wr);
+  S.modal.buyKrw = 0;
+  document.getElementById('mTitle').textContent = 'JOBY 매수 기록';
+  document.getElementById('mSub').textContent =
+    `고정감시 | WR ${joby && joby.wr != null ? joby.wr.toFixed(1) : '--'} | 배정금 없음`;
+  document.getElementById('mPrice').value = (joby && joby.price) || '';
+  document.getElementById('mFx').value = ((d && d.fx_rate) || 1350).toFixed(0);
+  document.getElementById('mSum').innerHTML =
+    `<div style="margin-top:6px">
+       <label style="font-size:11px;color:var(--text3)">매수금액 직접 입력 (원)</label>
+       <input type="number" id="jobyBuyKrw" placeholder="예: 100000"
+         style="width:100%;margin-top:4px;padding:8px;background:var(--surf);
+                border:1px solid var(--border);border-radius:6px;
+                color:var(--text);font-size:13px;font-family:var(--mono)">
+     </div>`;
+  document.getElementById('buyModal').classList.add('on');
+}
+
 function renderSig() {
   const d = S.data;
   if (!d) return;
@@ -1278,16 +1310,79 @@ function renderSig() {
     <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:4px">${bud.reason||''}</div>
   `;
 
+  // ── JOBY 고정 감시 카드
+  const jobyData = d.stock_data && d.stock_data['JOBY'];
+  const jobyHtml = jobyData ? (() => {
+    const jWr  = jobyData.wr;
+    const jLv  = wr_level_js(jWr);
+    const jLbl = jLv === 3 ? '🔴 강매수' : jLv === 2 ? '🟡 중매수'
+               : jLv === 1 ? '🟢 약매수' : '신호없음';
+    const jPill = jLv === 3 ? 'pill-red' : jLv === 2 ? 'pill-yellow'
+                : jLv === 1 ? 'pill-green' : '';
+    const jWrC = jLv >= 2 ? 'cr' : jLv === 1 ? 'cy' : '';
+    const dayChg = jobyData.pct || 0;
+    const jStg  = stages['JOBY'] || {};
+    const jDone = jStg.week === getCurrentWeek() && jLv > 0 && (jStg.done||0) >= jLv;
+    return `<div class="sig-card" style="border:1px solid rgba(96,165,250,.3);background:rgba(96,165,250,.05)">
+      <div style="font-size:9px;font-weight:700;color:var(--acc);letter-spacing:1.5px;margin-bottom:8px">
+        ✈️ 고정 감시 종목 · 배정금 없음
+      </div>
+      <div class="sig-head">
+        <div>
+          <div class="sig-ticker">JOBY</div>
+          <div class="sig-price">${fmtUsd(jobyData.price)}
+            <span class="${cc(dayChg)}">${sign(dayChg)}${dayChg?.toFixed(2)}%</span>
+          </div>
+          <div style="margin-top:5px">
+            ${jLv > 0
+              ? `<span class="pill ${jPill}">${jLbl}</span>`
+              : `<span style="font-size:11px;color:var(--text3)">신호없음</span>`}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--text3)">섹터</div>
+          <div style="font-size:12px;font-weight:600">UAM</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">배정금</div>
+          <div style="font-size:12px;color:var(--text3)">자율</div>
+        </div>
+      </div>
+      <div class="sig-g3">
+        <div class="sig-cell">
+          <div class="sig-cell-v ${jWrC}">${jWr != null ? jWr.toFixed(1) : '--'}</div>
+          <div class="sig-cell-l">WR(%)</div>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-cell-v" style="color:var(--text3)">자율</div>
+          <div class="sig-cell-l">비중</div>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-cell-v" style="color:var(--text3)">직접입력</div>
+          <div class="sig-cell-l">매수금액</div>
+        </div>
+      </div>
+      ${jLv > 0
+        ? jDone
+          ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px">
+               ✅ 이번 주 처리 완료 (${jStg.updated||''})
+             </div>`
+          : `<div class="sig-btns">
+               <button class="btn-sm btn-buy" style="flex:1" onclick="openJobyModal()">✅ 매수 기록</button>
+               <button class="btn-sm btn-pass" style="flex:1" onclick="doPass('JOBY',${jLv})">⏭ PASS</button>
+             </div>`
+        : ''}
+    </div>`;
+  })() : '';
+
   // 신호 카드
   const sigEl = document.getElementById('sigList');
   if (!sigs.length) {
-    sigEl.innerHTML = `<div class="card" style="text-align:center;color:var(--text3);padding:32px">
+    sigEl.innerHTML = jobyHtml + `<div class="card" style="text-align:center;color:var(--text3);padding:32px">
       <div style="font-size:32px;margin-bottom:8px">📭</div>
       <div style="font-size:13px">현재 매수 신호 없음</div>
-      <div style="font-size:11px;margin-top:4px">WR ≤ -50 조건 미충족</div>
+      <div style="font-size:11px;margin-top:4px">WR ≤ -60 조건 미충족</div>
     </div>`;
   } else {
-    sigEl.innerHTML = sigs.map(s => {
+    sigEl.innerHTML = jobyHtml + sigs.map(s => {
       const sig = s.allocation || {};
       const level = sig.signal;
       const levelN = level === 'STRONG' ? 3 : level === 'MEDIUM' ? 2 : 1;
@@ -1824,7 +1919,11 @@ async function confirmBuy() {
   const price = parseFloat(document.getElementById('mPrice').value);
   const fx = parseFloat(document.getElementById('mFx').value) || 1350;
   if (!price) { toast('❌ 단가를 입력하세요'); return; }
-  const buyKrw = S.modal.buyKrw;
+  const isJoby  = S.modal.ticker === 'JOBY';
+  const jobyInp = document.getElementById('jobyBuyKrw');
+  const buyKrw  = isJoby && jobyInp && parseInt(jobyInp.value) > 0
+                ? parseInt(jobyInp.value)
+                : S.modal.buyKrw;
   const shares = Math.floor(buyKrw/fx/price*10000)/10000;
   const date = new Date().toISOString().slice(0,10);
   await loadPortfolio();
