@@ -763,6 +763,23 @@ function investedByTicker() {
   return m;
 }
 
+// ── 이번 주 식별자 (YYYY-WNN)
+function getCurrentWeek() {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil((((d - start) / 86400000) + start.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + String(week).padStart(2, '0');
+}
+
+// ── 이번 주에 해당 레벨 이미 처리했는지 확인
+function isThisWeekDone(ticker, levelN) {
+  const stg = S.pf && S.pf.signal_stages && S.pf.signal_stages[ticker];
+  if (!stg) return false;
+  const thisWeek = getCurrentWeek();
+  // 같은 주 + 같은 레벨 이상이면 이미 처리
+  return stg.week === thisWeek && (stg.done || 0) >= levelN;
+}
+
 function totalBudget() {
   const monthly = parseInt(S.cfg.cfgMonthly || 800000);
   const initial = parseInt(S.cfg.cfgInitial || 0);
@@ -839,6 +856,10 @@ async function loadPortfolio() {
     S.pf = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,'')))));
     S.pfSha = j.sha;
     S.pf.signal_stages = S.pf.signal_stages || {};
+    // prev_top_tickers 최초 세팅: 없으면 현재 top_tickers로 자동 초기화
+    if (!S.pf.prev_top_tickers || S.pf.prev_top_tickers.length === 0) {
+      S.pf.prev_top_tickers = S.data ? [...(S.data.top_tickers || [])] : [];
+    }
     S.pf.manual_overrides = S.pf.manual_overrides || {};
   } catch(e) {
     S.pf = JSON.parse(localStorage.getItem('pf_local') || JSON.stringify(def));
@@ -1213,10 +1234,10 @@ async function execRebalancing() {
     if (S.pf.signal_stages) delete S.pf.signal_stages[t];
   });
 
-  // 신규 종목 signal_stages 초기화
+  // 신규 종목 signal_stages 초기화 (week 없음 → 바로 매수 가능)
   rb.added.forEach(t => {
     S.pf.signal_stages = S.pf.signal_stages || {};
-    S.pf.signal_stages[t] = { done: 0, updated: today, bonus: bonusPerNew };
+    S.pf.signal_stages[t] = { done: 0, week: '', updated: today, bonus: bonusPerNew };
   });
 
   // prev_top_tickers 갱신 (portfolio.json에 저장)
@@ -1266,7 +1287,8 @@ function renderSig() {
       const alloc = totalAllocTicker(s.ticker);
       const inv = invMap[s.ticker] || 0;
       const surplus = Math.max(0, alloc - inv);
-      const isDone = doneLv >= levelN;
+      // ★ 주간 재매수: 이번 주에 같은 레벨 처리했으면 완료, 아니면 재매수 가능
+      const isDone = isThisWeekDone(s.ticker, levelN);
       const wrColor = (s.wr||0) <= -70 ? 'cr' : 'cy';
       const dayChg = s.day_change_pct || s.pct || 0;
       const levelLabel = level === 'STRONG' ? '🔴 강매수' : level === 'MEDIUM' ? '🟡 중매수' : '🟢 약매수';
@@ -1299,7 +1321,7 @@ function renderSig() {
             <div class="sig-cell-l">잉여현금</div>
           </div>
         </div>
-        ${isDone ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px">✅ 이미 처리된 신호</div>` :
+        ${isDone ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px">✅ 이번 주 처리 완료 (${stg.updated||''})</div>` :
           surplus <= 0 ? `<div style="text-align:center;color:var(--red);font-size:12px;padding:4px">⚠️ 잉여현금 없음</div>` :
           `<div class="sig-btns">
             <button class="btn-sm btn-buy" style="flex:1" onclick="openModal('${s.ticker}',${levelN})">✅ 매수</button>
@@ -1510,8 +1532,37 @@ async function submitTx() {
         S.pf.holdings[idx].shares -= shares;
         if (S.pf.holdings[idx].shares <= 0.0001) S.pf.holdings.splice(idx, 1);
       }
+      // ── 매도대금 자동 반영 ──
+      const sellProceeds = Math.round(shares * price * fx);
+      const currTop   = S.data ? (S.data.top_tickers || []) : [];
+      const prevTop   = (S.pf && S.pf.prev_top_tickers) ? S.pf.prev_top_tickers : [];
+      const isRebalChk = document.getElementById('txIsRebalancing') &&
+                         document.getElementById('txIsRebalancing').checked;
+      // 체크박스 OR 자동 감지 (탈락 종목)
+      const isDropped = isRebalChk || (prevTop.includes(ticker) && !currTop.includes(ticker));
+      if (isDropped && sellProceeds > 0) {
+        // 신규 편입 종목 찾기
+        const newTickers = currTop.filter(t => !prevTop.includes(t));
+        if (newTickers.length > 0) {
+          const bonusEach = Math.round(sellProceeds / newTickers.length);
+          S.pf.signal_stages = S.pf.signal_stages || {};
+          newTickers.forEach(t => {
+            const stg = S.pf.signal_stages[t] || { done: 0 };
+            stg.bonus = (stg.bonus || 0) + bonusEach;
+            S.pf.signal_stages[t] = stg;
+          });
+          toast(`✅ 매도 ${ticker} | 매도대금 ₩${fmt(sellProceeds)} → ${newTickers.join('/')} 배정금 자동 이월`);
+        } else {
+          // 신규 종목 없으면 잉여현금으로 적립 (extra_deposits에 기록)
+          S.pf.extra_deposits = S.pf.extra_deposits || [];
+          S.pf.extra_deposits.push({ date, amount_krw: sellProceeds, note: ticker + ' 매도대금' });
+          toast(`✅ 매도 ${ticker} | 매도대금 ₩${fmt(sellProceeds)} 잉여현금 적립`);
+        }
+      } else {
+        toast(`✅ 매도 ${ticker} 기록됨`);
+      }
     }
-    toast(`✅ ${type==='buy'?'매수':type==='sell'?'매도':'배당재투자'} ${ticker} 기록됨`);
+    if (type !== 'sell') toast(`✅ ${type==='buy'?'매수':'배당재투자'} ${ticker} 기록됨`);
   }
 
   await savePortfolio();
@@ -1526,6 +1577,8 @@ function clearTxForm() {
     const e = document.getElementById(id); if (e) e.value = '';
   });
   document.getElementById('txDate').value = new Date().toISOString().slice(0,10);
+  const rbChk = document.getElementById('txIsRebalancing');
+  if (rbChk) rbChk.checked = false;
 }
 
 function renderTxList() {
@@ -1715,17 +1768,15 @@ function openModal(ticker, levelN) {
   const inv = invMap[ticker] || 0;
   const surplus = Math.max(0, alloc - inv);
   const stages = S.pf ? (S.pf.signal_stages || {}) : {};
-  const doneLv = (stages[ticker] || {}).done || 0;
-  const ratioMap = { 1:0.30, 2:0.667, 3:1.0 };
-  const newR = ratioMap[levelN] || 0.3;
-  const doneR = doneLv > 0 ? (ratioMap[doneLv]||0) : 0;
-  const monthly = parseInt(S.cfg.cfgMonthly || 800000);
-  const stage = (d.egg && d.egg.stage) || 3;
-  const top = d.top_tickers || [];
-  const totalW = top.reduce((a,t) => a + sectorWeight(t, stage), 0);
-  const ratio = totalW > 0 ? sectorWeight(ticker, stage) / totalW : 1/8;
-  const wps = monthly * ratio;
-  const rawBuy = Math.round(wps * (newR - doneR) / 100) * 100;
+  // 주간 재매수: 레벨별 고정 비중으로 매번 계산 (이전 레벨 차감 없음)
+  const budAmt = (d.budget && d.budget.amount) || parseInt(S.cfg.cfgMonthly || 800000);
+  const pctMap = { 1: 0.30, 2: 0.40, 3: 0.30 };  // 약30% / 중40% / 강30%
+  const pct = pctMap[levelN] || 0.30;
+  // 보너스(리밸런싱 이월금) 반영
+  const stgB = (S.pf && S.pf.signal_stages && S.pf.signal_stages[ticker]) || {};
+  const bonus = stgB.bonus || 0;
+  const baseBuy = Math.round((budAmt / 8 + bonus) * pct / 100) * 100;
+  const rawBuy = baseBuy;
   const buyKrw = surplus > 0 ? Math.min(surplus, rawBuy) : 0;
   S.modal.buyKrw = buyKrw;
   const lvLabel = levelN >= 3 ? '강매수' : levelN >= 2 ? '중매수' : '약매수';
@@ -1773,7 +1824,13 @@ async function confirmBuy() {
     S.pf.holdings.push({ ticker, shares, avg_price_usd:price, sector:NOBL[ticker]||'--', start_date:date });
   }
   S.pf.signal_stages = S.pf.signal_stages || {};
-  S.pf.signal_stages[ticker] = { done:levelN, updated:date };
+  const prevStg = S.pf.signal_stages[ticker] || {};
+  S.pf.signal_stages[ticker] = {
+    done: levelN,
+    week: getCurrentWeek(),
+    updated: date,
+    bonus: prevStg.bonus || 0,  // 보너스 유지
+  };
   await savePortfolio();
   closeModal();
   toast(`✅ ${ticker} ${shares}주 매수 완료`);
@@ -1784,9 +1841,15 @@ async function confirmBuy() {
 async function doPass(ticker, levelN) {
   await loadPortfolio();
   S.pf.signal_stages = S.pf.signal_stages || {};
-  S.pf.signal_stages[ticker] = { done:levelN, updated:new Date().toISOString().slice(0,10) };
+  const prevStgP = S.pf.signal_stages[ticker] || {};
+  S.pf.signal_stages[ticker] = {
+    done: levelN,
+    week: getCurrentWeek(),
+    updated: new Date().toISOString().slice(0,10),
+    bonus: prevStgP.bonus || 0,
+  };
   await savePortfolio();
-  toast(`⏭ ${ticker} PASS`);
+  toast(`⏭ ${ticker} PASS (이번 주 건너뜀)`);
   renderSig();
 }
 
