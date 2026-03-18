@@ -434,6 +434,15 @@ body{padding-bottom:72px}
       <label class="form-l">메모</label>
       <input type="text" class="form-i" id="txNote" placeholder="메모 입력...">
     </div>
+    <div id="rbChkWrap" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 14px;margin-bottom:6px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--yellow)">
+        <input type="checkbox" id="txIsRebalancing" style="width:16px;height:16px;accent-color:var(--yellow)">
+        🔄 리밸런싱 매도 — 탈락 종목 매도대금을 신규 종목에 자동 이월
+      </label>
+      <div id="rbChkDesc" style="font-size:10px;color:var(--text3);margin-top:5px;margin-left:24px">
+        체크 시 매도대금이 현재 Top8 신규 편입 종목 배정금에 균등 분배됩니다
+      </div>
+    </div>
     <button class="btn btn-pri" onclick="submitTx()">✅ 거래 저장</button>
   </div>
 
@@ -1478,11 +1487,20 @@ function renderHoldList() {
 function onTxType() {
   const t = document.getElementById('txType').value;
   const dep = t === 'deposit', div = t === 'dividend';
+  const isSell = t === 'sell';
   document.getElementById('txTickerG').style.display = dep ? 'none' : 'block';
   document.getElementById('txSharesG').style.display = (dep||div) ? 'none' : 'block';
   document.getElementById('txPriceR').style.display = (dep||div) ? 'none' : 'grid';
   document.getElementById('txAmtG').style.display = dep ? 'block' : 'none';
   document.getElementById('txDivG').style.display = div ? 'block' : 'none';
+  // 매도일 때만 리밸런싱 체크박스 표시
+  const rbWrap = document.getElementById('rbChkWrap');
+  if (rbWrap) rbWrap.style.display = isSell ? 'block' : 'none';
+  // 매도 아닐 때 체크박스 초기화
+  if (!isSell) {
+    const rbChk = document.getElementById('txIsRebalancing');
+    if (rbChk) rbChk.checked = false;
+  }
 }
 
 function fillTickerSel() {
