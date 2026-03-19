@@ -3,7 +3,7 @@
     "_comment": "M2/HY스프레드/신규실업청구 수동입력. null이면 캐시/추정값 사용",
     "m2_yoy": 4.3,
     "claims": 205000,
-    "hy_spread": 3.27
+    "hy_spread": 3.2
   },
   "holdings": [
     {
