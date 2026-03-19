@@ -26,6 +26,13 @@
       "avg_price_usd": 109.86,
       "sector": "금융",
       "start_date": "2026-03-17"
+    },
+    {
+      "ticker": "JOBY",
+      "shares": 21,
+      "avg_price_usd": 9.71,
+      "sector": "--",
+      "start_date": "2026-03-19"
     }
   ],
   "transactions": [
@@ -64,6 +71,15 @@
       "price_usd": 24.63,
       "fx": 1499,
       "note": "중 매수"
+    },
+    {
+      "date": "2026-03-19",
+      "type": "buy",
+      "ticker": "JOBY",
+      "shares": 21,
+      "price_usd": 9.71,
+      "fx": 1486,
+      "note": "Wr -94"
     }
   ],
   "extra_deposits": [
