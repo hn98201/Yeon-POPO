@@ -219,8 +219,16 @@ def send_daily_summary(egg, budget, signals, fx):
         f"종합 점수: {egg['score']}점",
         f"이번 달 예산: ₩{budget['amount']:,} ({budget['reason']})",
         f"환율: ₩{fx:,.0f}",
-        "매수 신호: 없음",
     ]
+    if signals:
+        lines.append("━━━━━━━━━━━━━━━━━")
+        lines.append(f"📌 현재 매수 신호 {len(signals)}개")
+        for s in signals:
+            icon = "🔴" if s['allocation']['signal']=='STRONG' else "🟡" if s['allocation']['signal']=='MEDIUM' else "🟢"
+            wr_str = f"{s['wr']:.1f}" if s.get('wr') else "--"
+            lines.append(f"{icon} <b>{s['ticker']}</b> WR {wr_str} | ₩{s['allocation']['amount']:,}")
+    else:
+        lines.append("매수 신호: 없음")
     tg('\n'.join(lines))
 
 # ═══════════════════════════════════════════
@@ -1010,8 +1018,11 @@ def main():
             sig_lines.append(f"{icon} <b>{s['ticker']}</b> WR {wr_str} | ₩{s['allocation']['amount']:,}")
         tg('\n'.join(sig_lines))
 
-    # 7순위: 신호 없을 때 오전 일일 요약
-    if not signals and not wr_changes and 7 <= now.hour <= 10:
+    # 7순위: 오전 7시 일일 현황 (신호 유무 관계없이 항상 발송)
+    if now.hour == 7 and now.minute <= 30:
+        send_daily_summary(egg, budget, signals, fx)
+    # 신호 없을 때 추가 요약 (7:30 실행 시)
+    elif not signals and not wr_changes and 7 <= now.hour <= 10:
         send_daily_summary(egg, budget, signals, fx)
 
     # 8순위: 지표 업데이트 리마인더
