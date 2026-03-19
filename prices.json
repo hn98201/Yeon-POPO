@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-03-19 07:58 KST",
-  "fx_rate": 1506.63,
+  "updated_at": "2026-03-19 11:11 KST",
+  "fx_rate": 1496.58,
   "egg": {
     "stage": 4,
     "score": 2.0,
@@ -257,7 +257,7 @@
       "avg_price_usd": 191.9,
       "current_price": 190.78,
       "current_value_usd": 32.28,
-      "current_value_krw": 48634,
+      "current_value_krw": 48310,
       "pnl_pct": -0.58,
       "day_change_pct": -1.7,
       "wr": -68.7,
@@ -271,7 +271,7 @@
       "avg_price_usd": 24.386994110272724,
       "current_price": 23.67,
       "current_value_usd": 100.07,
-      "current_value_krw": 150768,
+      "current_value_krw": 149762,
       "pnl_pct": -2.94,
       "day_change_pct": -3.78,
       "wr": -87.3,
@@ -285,7 +285,7 @@
       "avg_price_usd": 109.86,
       "current_price": 107.92,
       "current_value_usd": 23.93,
-      "current_value_krw": 36047,
+      "current_value_krw": 35807,
       "pnl_pct": -1.77,
       "day_change_pct": -1.46,
       "wr": -83.3,
@@ -295,7 +295,7 @@
   ],
   "portfolio_summary": {
     "total_value_usd": 156.28,
-    "total_value_krw": 235456,
+    "total_value_krw": 233886,
     "total_pnl_pct": -2.28,
     "total_invested_krw": 20800000
   },
