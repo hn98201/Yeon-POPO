@@ -116,7 +116,7 @@ body{padding-bottom:72px}
 .sig-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .sig-ticker{font-size:20px;font-weight:900;font-family:var(--mono)}
 .sig-price{font-size:13px;color:var(--text2);font-family:var(--mono);margin-top:2px}
-.sig-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
+.sig-g3{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:10px}
 .sig-cell{background:var(--surf);border-radius:9px;padding:9px 6px;text-align:center}
 .sig-cell-v{font-size:15px;font-weight:700;font-family:var(--mono);line-height:1.2}
 .sig-cell-l{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
@@ -257,6 +257,7 @@ body{padding-bottom:72px}
     <div class="g2">
       <div class="stat">
         <div class="stat-v ca" id="sTotalBudget">--</div>
+        <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:2px" id="sNTickers"></div>
         <div class="stat-l">총 배정금</div>
       </div>
       <div class="stat">
@@ -807,14 +808,27 @@ function sectorWeight(ticker, stage) {
 
 function totalAllocTicker(ticker) {
   if (!S.pf || !S.data) return 0;
-  const { monthly, months } = totalBudget();
+  const { months } = totalBudget();
   if (!months) return 0;
-  const bud = (S.data.budget && S.data.budget.amount) || monthly;
-  const base = Math.round(bud / 8);
-  // 리밸런싱 이월 보너스 반영
+  // ★ prices.json의 per_ticker_budget 사용 (Top8+보유탈락 분할)
+  const perBudget = S.data.per_ticker_budget
+    || Math.round((S.data.budget && S.data.budget.amount || 800000) / 8);
+  const base = perBudget * months;
   const stg = S.pf.signal_stages && S.pf.signal_stages[ticker];
   const bonus = (stg && stg.bonus) ? stg.bonus : 0;
   return base + bonus;
+}
+
+// ★ 잉여현금 기반 매수금액 계산
+function calcSurplusBuyAmount(ticker, levelN) {
+  const alloc   = totalAllocTicker(ticker);
+  const invMap  = investedByTicker();
+  const inv     = invMap[ticker] || 0;
+  const surplus = Math.max(0, alloc - inv);
+  if (surplus <= 0) return 0;
+  const pctMap = { 1: 0.30, 2: 0.40, 3: 0.30 };
+  const pct = pctMap[levelN] || 0.30;
+  return Math.floor(surplus * pct / 100) * 100;
 }
 
 function mergedHoldings() {
@@ -1029,6 +1043,15 @@ function renderHome() {
   pnlEl.innerHTML = `<span class="pill ${pnlPct >= 0 ? 'pill-green' : 'pill-red'}">${sign(pnlPct)}${pnlPct.toFixed(2)}%</span>`;
 
   document.getElementById('sTotalBudget').textContent = bTotal > 0 ? '₩' + fmt(Math.round(bTotal)) : '시작일설정';
+  // 종목수 표시
+  if (S.data) {
+    const nTick = document.getElementById('sNTickers');
+    if (nTick) {
+      const n  = S.data.n_tickers || 8;
+      const hd = (S.data.held_dropped||[]).length;
+      nTick.textContent = hd > 0 ? ` (Top${n-hd}+보유${hd})` : ` (${n}종목)`;
+    }
+  }
   document.getElementById('sSurplus').textContent = '₩' + fmt(Math.round(surplus));
   document.getElementById('sTotalDiv').textContent = totalDivSum > 0 ? '₩' + fmt(totalDivSum) : '₩0';
   document.getElementById('sMonths').textContent = months + '개월';
@@ -1375,14 +1398,17 @@ function renderSig() {
 
   // 신호 카드
   const sigEl = document.getElementById('sigList');
-  if (!sigs.length) {
+  const heldSigsArr = d.held_signals || [];
+  if (!sigs.length && !heldSigsArr.length) {
     sigEl.innerHTML = jobyHtml + `<div class="card" style="text-align:center;color:var(--text3);padding:32px">
       <div style="font-size:32px;margin-bottom:8px">📭</div>
       <div style="font-size:13px">현재 매수 신호 없음</div>
       <div style="font-size:11px;margin-top:4px">WR ≤ -60 조건 미충족</div>
     </div>`;
   } else {
-    sigEl.innerHTML = jobyHtml + sigs.map(s => {
+    // held_signals (보유탈락 종목 신호)도 sigs에 포함해서 렌더
+    const allSigs = [...sigs, ...(d.held_signals||[])];
+    sigEl.innerHTML = jobyHtml + allSigs.map(s => {
       const sig = s.allocation || {};
       const level = sig.signal;
       const levelN = level === 'STRONG' ? 3 : level === 'MEDIUM' ? 2 : 1;
@@ -1391,16 +1417,17 @@ function renderSig() {
       const alloc = totalAllocTicker(s.ticker);
       const inv = invMap[s.ticker] || 0;
       const surplus = Math.max(0, alloc - inv);
+      const isHeldDrop = s.held_drop === true;
       // ★ 주간 재매수: 이번 주에 같은 레벨 처리했으면 완료, 아니면 재매수 가능
       const isDone = isThisWeekDone(s.ticker, levelN);
       const wrColor = (s.wr||0) <= -70 ? 'cr' : 'cy';
       const dayChg = s.day_change_pct || s.pct || 0;
       const levelLabel = level === 'STRONG' ? '🔴 강매수' : level === 'MEDIUM' ? '🟡 중매수' : '🟢 약매수';
       const pillCls = level === 'STRONG' ? 'pill-red' : level === 'MEDIUM' ? 'pill-yellow' : 'pill-green';
-      return `<div class="sig-card">
+      return `<div class="sig-card" style="${isHeldDrop ? 'border-color:rgba(148,163,184,.3);' : ''}">
         <div class="sig-head">
           <div>
-            <div class="sig-ticker">${s.ticker}</div>
+            <div class="sig-ticker">${s.ticker}${isHeldDrop ? ' <span style="font-size:9px;color:var(--text3);font-weight:400">🔒보유탈락</span>' : ''}</div>
             <div class="sig-price">${fmtUsd(s.price)} <span class="${cc(dayChg)}">${sign(dayChg)}${dayChg?.toFixed(2)}%</span></div>
             <div style="margin-top:5px"><span class="pill ${pillCls}">${levelLabel}</span></div>
           </div>
@@ -1423,6 +1450,10 @@ function renderSig() {
           <div class="sig-cell">
             <div class="sig-cell-v ${surplus>0?'cy':'cr'}">₩${fmt(surplus)}</div>
             <div class="sig-cell-l">잉여현금</div>
+          </div>
+          <div class="sig-cell">
+            <div class="sig-cell-v cy">₩${fmt(calcSurplusBuyAmount(s.ticker, levelN))}</div>
+            <div class="sig-cell-l">이번 매수</div>
           </div>
         </div>
         ${isDone ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px">✅ 이번 주 처리 완료 (${stg.updated||''})</div>` :
@@ -1449,17 +1480,20 @@ function renderSig() {
   // 잉여현금 목록
   const surplusEl = document.getElementById('surplusList');
   if (!months) { surplusEl.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">투자 시작일을 설정하세요</div>'; return; }
-  const items = (d.top_tickers||[]).map(ticker => {
+  // Top8 + 보유탈락 종목 합산
+  const allActiveTickers = [...(d.top_tickers||[]), ...(d.held_dropped||[])];
+  const items = allActiveTickers.map(ticker => {
     const alloc = totalAllocTicker(ticker);
     const inv = invMap[ticker] || 0;
     const surplus = Math.max(0, alloc - inv);
     const pct = alloc > 0 ? Math.min(100, inv/alloc*100) : 0;
-    return { ticker, alloc, inv, surplus, pct };
+    const isHeld = (d.held_dropped||[]).includes(ticker);
+    return { ticker, alloc, inv, surplus, pct, isHeld };
   }).sort((a,b) => b.surplus - a.surplus);
   surplusEl.innerHTML = items.map(item => `
     <div class="div-row">
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;font-family:var(--mono)">${item.ticker}</div>
+        <div style="font-size:13px;font-weight:700;font-family:var(--mono)">${item.ticker}${item.isHeld ? ' <span style="font-size:9px;color:var(--text3)">🔒탈락보유</span>' : ''}</div>
         <div style="font-size:10px;color:var(--text3)">배정 ${fmt(item.alloc)}원 · 투자 ${fmt(Math.round(item.inv))}원</div>
         <div class="prog" style="margin-top:5px"><div class="prog-fill" style="width:${item.pct.toFixed(0)}%;background:${item.surplus>0?'var(--acc)':'var(--green)'}"></div></div>
       </div>
@@ -1888,16 +1922,8 @@ function openModal(ticker, levelN) {
   const inv = invMap[ticker] || 0;
   const surplus = Math.max(0, alloc - inv);
   const stages = S.pf ? (S.pf.signal_stages || {}) : {};
-  // 주간 재매수: 레벨별 고정 비중으로 매번 계산 (이전 레벨 차감 없음)
-  const budAmt = (d.budget && d.budget.amount) || parseInt(S.cfg.cfgMonthly || 800000);
-  const pctMap = { 1: 0.30, 2: 0.40, 3: 0.30 };  // 약30% / 중40% / 강30%
-  const pct = pctMap[levelN] || 0.30;
-  // 보너스(리밸런싱 이월금) 반영
-  const stgB = (S.pf && S.pf.signal_stages && S.pf.signal_stages[ticker]) || {};
-  const bonus = stgB.bonus || 0;
-  const baseBuy = Math.round((budAmt / 8 + bonus) * pct / 100) * 100;
-  const rawBuy = baseBuy;
-  const buyKrw = surplus > 0 ? Math.min(surplus, rawBuy) : 0;
+  // ★ 잉여현금 기반 매수금액 (surplus × 단계별 %)
+  const buyKrw = calcSurplusBuyAmount(ticker, levelN);
   S.modal.buyKrw = buyKrw;
   const lvLabel = levelN >= 3 ? '강매수' : levelN >= 2 ? '중매수' : '약매수';
   document.getElementById('mTitle').textContent = `${ticker} 매수 확정`;
