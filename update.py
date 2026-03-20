@@ -704,26 +704,41 @@ def calc_rs(ticker: str) -> float | None:
 
 def select_top_rs(stage: int, top_n: int = 8) -> tuple[list, list]:
     """
-    ★ 엄격 필터: 달걀 단계 선호 섹터 종목만 허용
-    → 200MA 위 + 해당 섹터만 RS 랭킹
-    → 종목 수 부족해도 보충 없음 (6개면 6개로 운용)
+    하이브리드 필터:
+    1순위: 달걀 단계 선호 섹터 + 200MA 조건 → RS 상위 우선 선정
+    2순위: 부족 시 전체 NOBL에서 RS 랭킹 보충 (최대 top_n까지)
+    → 탈락 종목은 분기 전까지 별도 보유 유지 (get_held_dropped_tickers)
     """
-    pref   = STAGE_SECTORS.get(stage, [])
-    pref_t = [t for t, s in NOBL_UNIVERSE.items() if s in pref]
-    scores = []
+    pref    = STAGE_SECTORS.get(stage, [])
+    pref_t  = [t for t, s in NOBL_UNIVERSE.items() if s in pref]
+    other_t = [t for t, s in NOBL_UNIVERSE.items() if s not in pref]
+    scores  = []
 
-    print(f"  선호 섹터 {pref} — {len(pref_t)}개 종목 RS 계산 (엄격 필터)...")
+    print(f"  선호 섹터 {pref} — {len(pref_t)}개 종목 RS 계산...")
     for t in pref_t:
         time.sleep(0.2)
         rs = calc_rs(t)
         if rs is not None:
             scores.append({'ticker': t, 'sector': NOBL_UNIVERSE[t], 'rs': rs})
-
     scores.sort(key=lambda x: x['rs'], reverse=True)
+
+    # 선호 섹터로 top_n 미달 시 전체 NOBL RS 랭킹으로 보충
+    if len(scores) < top_n:
+        print(f"  선호 섹터 {len(scores)}개 — 부족분 {top_n - len(scores)}개 전체 랭킹 보충...")
+        for t in other_t:
+            if len(scores) >= top_n + 2: break
+            time.sleep(0.2)
+            rs = calc_rs(t)
+            if rs is not None:
+                scores.append({'ticker': t, 'sector': NOBL_UNIVERSE[t], 'rs': rs})
+        scores.sort(key=lambda x: x['rs'], reverse=True)
+
     top_scores = scores[:top_n]
     selected   = [x['ticker'] for x in top_scores]
 
-    print(f"  → 선정 {len(selected)}개 (200MA 통과 + 섹터 조건 충족)")
+    pref_cnt  = sum(1 for x in top_scores if NOBL_UNIVERSE.get(x['ticker']) in pref)
+    other_cnt = len(top_scores) - pref_cnt
+    print(f"  → 선정 {len(selected)}개 (선호섹터 {pref_cnt}개 + 보충 {other_cnt}개)")
     return selected, top_scores
 
 # ═══════════════════════════════════════════
