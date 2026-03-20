@@ -40,6 +40,13 @@
       "avg_price_usd": 119.38,
       "sector": "필수소비재",
       "start_date": "2026-03-20"
+    },
+    {
+      "ticker": "CL",
+      "shares": 0.2621,
+      "avg_price_usd": 84.59,
+      "sector": "필수소비재",
+      "start_date": "2026-03-20"
     }
   ],
   "transactions": [
@@ -114,6 +121,15 @@
       "price_usd": 119.38,
       "fx": 1515,
       "note": "신호매수 약"
+    },
+    {
+      "date": "2026-03-20",
+      "type": "buy",
+      "ticker": "CL",
+      "shares": 0.2621,
+      "price_usd": 84.59,
+      "fx": 1515,
+      "note": "신호매수 약"
     }
   ],
   "extra_deposits": [
@@ -142,6 +158,12 @@
       "bonus": 0
     },
     "WMT": {
+      "done": 1,
+      "week": "2026-W12",
+      "updated": "2026-03-20",
+      "bonus": 0
+    },
+    "CL": {
       "done": 1,
       "week": "2026-W12",
       "updated": "2026-03-20",
