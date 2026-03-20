@@ -22,8 +22,8 @@
     },
     {
       "ticker": "AFL",
-      "shares": 0.2217,
-      "avg_price_usd": 109.86,
+      "shares": 0.362,
+      "avg_price_usd": 108.48025414364642,
       "sector": "금융",
       "start_date": "2026-03-17"
     },
@@ -89,6 +89,15 @@
       "price_usd": 189.3,
       "fx": 1498,
       "note": "신호매수 중"
+    },
+    {
+      "date": "2026-03-20",
+      "type": "buy",
+      "ticker": "AFL",
+      "shares": 0.1403,
+      "price_usd": 106.3,
+      "fx": 1515,
+      "note": "신호매수 강"
     }
   ],
   "extra_deposits": [
@@ -105,8 +114,10 @@
       "bonus": 0
     },
     "AFL": {
-      "done": 1,
-      "updated": "2026-03-17"
+      "done": 3,
+      "week": "2026-W12",
+      "updated": "2026-03-20",
+      "bonus": 0
     },
     "JOBY": {
       "done": 3,
