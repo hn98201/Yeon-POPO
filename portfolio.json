@@ -8,8 +8,8 @@
   "holdings": [
     {
       "ticker": "TXN",
-      "shares": 0.1692,
-      "avg_price_usd": 191.9,
+      "shares": 0.289,
+      "avg_price_usd": 190.822214532872,
       "sector": "기술",
       "start_date": "2026-03-16"
     },
@@ -80,6 +80,15 @@
       "price_usd": 9.71,
       "fx": 1486,
       "note": "Wr -94"
+    },
+    {
+      "date": "2026-03-20",
+      "type": "buy",
+      "ticker": "TXN",
+      "shares": 0.1198,
+      "price_usd": 189.3,
+      "fx": 1498,
+      "note": "신호매수 중"
     }
   ],
   "extra_deposits": [
@@ -90,8 +99,10 @@
   ],
   "signal_stages": {
     "TXN": {
-      "done": 1,
-      "updated": "2026-03-16"
+      "done": 2,
+      "week": "2026-W12",
+      "updated": "2026-03-20",
+      "bonus": 0
     },
     "AFL": {
       "done": 1,
