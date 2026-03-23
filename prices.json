@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-24 07:36 KST",
+  "updated_at": "2026-03-24 08:02 KST",
   "fx_rate": 1486.3,
   "egg": {
     "stage": 4,
@@ -175,9 +175,9 @@
     },
     "WMT": {
       "price": 120.72,
-      "prev": 119.31,
-      "change": 1.41,
-      "pct": 1.18,
+      "prev": 119.2,
+      "change": 1.52,
+      "pct": 1.28,
       "wr": null,
       "sector": "필수소비재",
       "rs": 20.43,
@@ -209,9 +209,9 @@
     },
     "PEP": {
       "price": 150.88,
-      "prev": 150.51,
-      "change": 0.37,
-      "pct": 0.25,
+      "prev": 151.0,
+      "change": -0.12,
+      "pct": -0.08,
       "wr": null,
       "sector": "필수소비재",
       "rs": 17.49,
@@ -388,7 +388,7 @@
       "current_value_usd": 22.42,
       "current_value_krw": 33319,
       "pnl_pct": 1.12,
-      "day_change_pct": 1.18,
+      "day_change_pct": 1.28,
       "wr": null,
       "dividends_usd": 0,
       "held_drop": false,
