@@ -130,6 +130,13 @@
       "price_usd": 84.59,
       "fx": 1515,
       "note": "신호매수 약"
+    },
+    {
+      "date": "2026-03-24",
+      "type": "dividend",
+      "ticker": "SWK",
+      "div_krw": 0.11,
+      "note": "배당입금"
     }
   ],
   "extra_deposits": [
