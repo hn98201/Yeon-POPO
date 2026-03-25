@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-26 07:40 KST",
+  "updated_at": "2026-03-26 08:05 KST",
   "fx_rate": 1501.99,
   "egg": {
     "stage": 4,
@@ -141,9 +141,9 @@
     },
     "CL": {
       "price": 85.49,
-      "prev": 85.05,
-      "change": 0.44,
-      "pct": 0.52,
+      "prev": 85.2,
+      "change": 0.29,
+      "pct": 0.34,
       "wr": -58.1,
       "sector": "필수소비재",
       "rs": 23.98,
@@ -442,7 +442,7 @@
       "current_value_usd": 22.41,
       "current_value_krw": 33655,
       "pnl_pct": 1.06,
-      "day_change_pct": 0.52,
+      "day_change_pct": 0.34,
       "wr": -58.1,
       "dividends_usd": 0,
       "held_drop": false,
