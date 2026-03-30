@@ -806,15 +806,27 @@ function sectorWeight(ticker, stage) {
   return 0.7;
 }
 
-// ── v5.0: ticker_alloc 기반 누적 배정금
+// ── v5.0: ticker_alloc 기반 누적 배정금 (폴백 포함)
 function totalAllocTicker(ticker) {
   if (!S.data) return 0;
-  // prices.json의 ticker_alloc (update.py가 매월 1일/12일에 업데이트)
+
+  // 1순위: prices.json의 ticker_alloc (update.py가 관리)
   const ta = S.data.ticker_alloc || {};
-  if (ta[ticker] !== undefined) return ta[ticker];
-  // 폴백: stock_data의 ticker_alloc
+  if (ta[ticker] !== undefined && ta[ticker] > 0) return ta[ticker];
+
+  // 2순위: stock_data의 ticker_alloc
   const sd = S.data.stock_data && S.data.stock_data[ticker];
-  return (sd && sd.ticker_alloc) || 0;
+  if (sd && sd.ticker_alloc && sd.ticker_alloc > 0) return sd.ticker_alloc;
+
+  // 3순위: 폴백 — 경과월 × 종목당 배정금 (구 방식, 초기화 전 사용)
+  const { months } = totalBudget();
+  if (!months) return 0;
+  const n      = S.data.n_tickers || 8;
+  const bud    = (S.data.budget && S.data.budget.amount) || parseInt(S.cfg.cfgMonthly || 800000);
+  const per    = Math.round(bud / n);
+  const stg    = S.pf && S.pf.signal_stages && S.pf.signal_stages[ticker];
+  const bonus  = (stg && stg.bonus) ? stg.bonus : 0;
+  return per * months + bonus;
 }
 
 // ── v5.0: 잉여현금 = 누적배정금 - 실투자금
