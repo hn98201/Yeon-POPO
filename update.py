@@ -269,6 +269,42 @@ def load_previous() -> dict:
     return {}
 
 # ═══════════════════════════════════════════
+# ticker_alloc 소급 초기화 (v4→v5 마이그레이션)
+# ═══════════════════════════════════════════
+def init_ticker_alloc_if_needed(pf: dict, all_tickers: list, budget_amount: int) -> bool:
+    ta = pf.get('ticker_alloc', {})
+    if any(v > 0 for v in ta.values()):
+        return False
+    if not all_tickers:
+        return False
+
+    n = len(all_tickers)
+    deposits = pf.get('extra_deposits', [])
+    pf.setdefault('ticker_alloc', {})
+    pf.setdefault('alloc_pool', 0)
+
+    if deposits:
+        # 기존 extra_deposits 기록으로 소급 계산
+        for dep in deposits:
+            invest_krw = dep.get('invest_krw', dep.get('amount_krw', budget_amount))
+            per = invest_krw // n
+            for t in all_tickers:
+                pf['ticker_alloc'][t] = pf['ticker_alloc'].get(t, 0) + per
+            pool_krw = dep.get('pool_krw', 0)
+            pf['alloc_pool'] = pf.get('alloc_pool', 0) + pool_krw
+        print(f"  -> ticker_alloc 소급 초기화: {len(deposits)}회 입금 기록 반영")
+    else:
+        # extra_deposits 없으면 실투자금 기반으로 역산
+        inv_map = get_invested_by_ticker(pf)
+        for t in all_tickers:
+            invested = inv_map.get(t, 0)
+            pf['ticker_alloc'][t] = int(invested + budget_amount // n)
+        print(f"  -> ticker_alloc 역산 초기화 (투자금 기반)")
+
+    save_portfolio(pf)
+    return True
+
+# ═══════════════════════════════════════════
 # 보유 탈락 종목 조회
 # ═══════════════════════════════════════════
 def get_held_dropped_tickers(top_tickers: list, pf: dict) -> list:
@@ -895,6 +931,13 @@ def main():
     # 배정 대상 종목 (JOBY 제외)
     all_active = top_tickers + held_dropped
     n_tickers  = len(all_active)
+
+    # ── ticker_alloc 최초 초기화 (v4->v5 마이그레이션, 이후 스킵)
+    print("[초기화] ticker_alloc 확인...")
+    migrated = init_ticker_alloc_if_needed(pf, all_active, budget['amount'])
+    if migrated:
+        pf = load_portfolio()
+        tg(f"🔧 <b>배정금 시스템 초기화 완료</b>\n종목별 배정금이 기존 입금 기록으로 복원됐습니다.\n종목수: {len(all_active)}개")
 
     # ── 매월 12일 입금 처리
     print("[월 입금] 12일 자동 입금 확인...")
