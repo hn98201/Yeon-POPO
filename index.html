@@ -806,25 +806,28 @@ function sectorWeight(ticker, stage) {
   return 0.7;
 }
 
+// ── v5.0: ticker_alloc 기반 누적 배정금
 function totalAllocTicker(ticker) {
-  if (!S.pf || !S.data) return 0;
-  const { months } = totalBudget();
-  if (!months) return 0;
-  // ★ prices.json의 per_ticker_budget 사용 (Top8+보유탈락 분할)
-  const perBudget = S.data.per_ticker_budget
-    || Math.round((S.data.budget && S.data.budget.amount || 800000) / 8);
-  const base = perBudget * months;
-  const stg = S.pf.signal_stages && S.pf.signal_stages[ticker];
-  const bonus = (stg && stg.bonus) ? stg.bonus : 0;
-  return base + bonus;
+  if (!S.data) return 0;
+  // prices.json의 ticker_alloc (update.py가 매월 1일/12일에 업데이트)
+  const ta = S.data.ticker_alloc || {};
+  if (ta[ticker] !== undefined) return ta[ticker];
+  // 폴백: stock_data의 ticker_alloc
+  const sd = S.data.stock_data && S.data.stock_data[ticker];
+  return (sd && sd.ticker_alloc) || 0;
 }
 
-// ★ 잉여현금 기반 매수금액 계산
+// ── v5.0: 잉여현금 = 누적배정금 - 실투자금
+function getTickerSurplus(ticker) {
+  const alloc  = totalAllocTicker(ticker);
+  const invMap = investedByTicker();
+  const inv    = invMap[ticker] || 0;
+  return Math.max(0, alloc - inv);
+}
+
+// ── v5.0: 잉여현금 기반 매수금액 계산
 function calcSurplusBuyAmount(ticker, levelN) {
-  const alloc   = totalAllocTicker(ticker);
-  const invMap  = investedByTicker();
-  const inv     = invMap[ticker] || 0;
-  const surplus = Math.max(0, alloc - inv);
+  const surplus = getTickerSurplus(ticker);
   if (surplus <= 0) return 0;
   const pctMap = { 1: 0.30, 2: 0.40, 3: 0.30 };
   const pct = pctMap[levelN] || 0.30;
@@ -1042,14 +1045,18 @@ function renderHome() {
   const pnlEl = document.getElementById('heroPnl');
   pnlEl.innerHTML = `<span class="pill ${pnlPct >= 0 ? 'pill-green' : 'pill-red'}">${sign(pnlPct)}${pnlPct.toFixed(2)}%</span>`;
 
-  document.getElementById('sTotalBudget').textContent = bTotal > 0 ? '₩' + fmt(Math.round(bTotal)) : '시작일설정';
-  // 종목수 표시
+  // v5.0: 총 배정금 = 모든 종목 ticker_alloc 합산
+  const tickerAllocMap = (S.data && S.data.ticker_alloc) || {};
+  const totalAlloc = Object.values(tickerAllocMap).reduce((a,b)=>a+b, 0);
+  document.getElementById('sTotalBudget').textContent = totalAlloc > 0 ? '₩' + fmt(Math.round(totalAlloc)) : (bTotal > 0 ? '₩' + fmt(Math.round(bTotal)) : '시작일설정');
+  // 잉여풀 표시
   if (S.data) {
     const nTick = document.getElementById('sNTickers');
     if (nTick) {
-      const n  = S.data.n_tickers || 8;
-      const hd = (S.data.held_dropped||[]).length;
-      nTick.textContent = hd > 0 ? ` (Top${n-hd}+보유${hd})` : ` (${n}종목)`;
+      const n   = S.data.n_tickers || 8;
+      const hd  = (S.data.held_dropped||[]).length;
+      const pool = S.data.alloc_pool || 0;
+      nTick.textContent = (hd > 0 ? `Top${n-hd}+보유${hd} ` : `${n}종목 `) + `| 잉여풀 ₩${fmt(pool)}`;
     }
   }
   document.getElementById('sSurplus').textContent = '₩' + fmt(Math.round(surplus));
@@ -1327,10 +1334,22 @@ function renderSig() {
   const stages = S.pf ? (S.pf.signal_stages || {}) : {};
 
   // 예산 카드
+  const pool = (S.data && S.data.alloc_pool) || 0;
+  const tickAllocTotal = Object.values((S.data && S.data.ticker_alloc)||{}).reduce((a,b)=>a+b,0);
   document.getElementById('budgetSigCard').innerHTML = `
     <div class="card-t">이번 달 조정 예산</div>
     <div style="text-align:center;font-size:26px;font-weight:900;font-family:var(--mono);color:var(--acc3)">₩${fmt(adjBudget)}</div>
     <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:4px">${bud.reason||''}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <div style="text-align:center;flex:1">
+        <div style="font-size:9px;color:var(--text3)">잉여풀</div>
+        <div style="font-size:13px;font-weight:700;color:var(--yellow);font-family:var(--mono)">₩${fmt(pool)}</div>
+      </div>
+      <div style="text-align:center;flex:1">
+        <div style="font-size:9px;color:var(--text3)">총 배정금</div>
+        <div style="font-size:13px;font-weight:700;color:var(--acc);font-family:var(--mono)">₩${fmt(tickAllocTotal)}</div>
+      </div>
+    </div>
   `;
 
   // ── JOBY 고정 감시 카드
@@ -1414,9 +1433,9 @@ function renderSig() {
       const levelN = level === 'STRONG' ? 3 : level === 'MEDIUM' ? 2 : 1;
       const stg = stages[s.ticker] || { done: 0 };
       const doneLv = stg.done || 0;
-      const alloc = totalAllocTicker(s.ticker);
-      const inv = invMap[s.ticker] || 0;
-      const surplus = Math.max(0, alloc - inv);
+      const alloc   = totalAllocTicker(s.ticker);
+      const inv     = invMap[s.ticker] || 0;
+      const surplus = getTickerSurplus(s.ticker);
       const isHeldDrop = s.held_drop === true;
       // ★ 주간 재매수: 이번 주에 같은 레벨 처리했으면 완료, 아니면 재매수 가능
       const isDone = isThisWeekDone(s.ticker, levelN);
@@ -1483,11 +1502,11 @@ function renderSig() {
   // Top8 + 보유탈락 종목 합산
   const allActiveTickers = [...(d.top_tickers||[]), ...(d.held_dropped||[])];
   const items = allActiveTickers.map(ticker => {
-    const alloc = totalAllocTicker(ticker);
-    const inv = invMap[ticker] || 0;
-    const surplus = Math.max(0, alloc - inv);
-    const pct = alloc > 0 ? Math.min(100, inv/alloc*100) : 0;
-    const isHeld = (d.held_dropped||[]).includes(ticker);
+    const alloc   = totalAllocTicker(ticker);
+    const inv     = invMap[ticker] || 0;
+    const surplus = getTickerSurplus(ticker);
+    const pct     = alloc > 0 ? Math.min(100, inv/alloc*100) : 0;
+    const isHeld  = (d.held_dropped||[]).includes(ticker);
     return { ticker, alloc, inv, surplus, pct, isHeld };
   }).sort((a,b) => b.surplus - a.surplus);
   surplusEl.innerHTML = items.map(item => `
@@ -1917,10 +1936,8 @@ function openModal(ticker, levelN) {
   S.modal.level = levelN;
   const d = S.data;
   const sig = (d.signals || []).find(s => s.ticker === ticker) || {};
-  const invMap = investedByTicker();
-  const alloc = totalAllocTicker(ticker);
-  const inv = invMap[ticker] || 0;
-  const surplus = Math.max(0, alloc - inv);
+  const invMap  = investedByTicker();
+  const surplus = getTickerSurplus(ticker);
   const stages = S.pf ? (S.pf.signal_stages || {}) : {};
   // ★ 잉여현금 기반 매수금액 (surplus × 단계별 %)
   const buyKrw = calcSurplusBuyAmount(ticker, levelN);
