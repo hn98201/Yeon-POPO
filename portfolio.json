@@ -175,6 +175,18 @@
       "week": "2026-W12",
       "updated": "2026-03-20",
       "bonus": 0
+    },
+    "TGT": {
+      "done": 0,
+      "week": "",
+      "updated": "2026-04-01",
+      "bonus": 56000
+    },
+    "ADM": {
+      "done": 0,
+      "week": "",
+      "updated": "2026-04-01",
+      "bonus": 56000
     }
   },
   "m2_history": [
@@ -188,13 +200,13 @@
     }
   ],
   "prev_top_tickers": [
-    "TXN",
+    "TGT",
     "WMT",
     "CB",
-    "KO",
     "CL",
+    "KO",
     "PEP",
-    "BEN",
-    "SYY"
+    "ADM",
+    "TXN"
   ]
 }
