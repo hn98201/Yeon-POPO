@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-04-01 21:07 KST",
-  "fx_rate": 1504.62,
+  "updated_at": "2026-04-01 21:14 KST",
+  "fx_rate": 1505.58,
   "egg": {
     "stage": 4,
     "score": 4.5,
     "desc": "④ 상승 본격",
     "indicators": {
-      "vix": 24.23,
+      "vix": 24.15,
       "fed_rate": 3.6,
       "spread": 0.71,
       "cpi_yoy": 2.41,
@@ -19,7 +19,7 @@
     "scoring_details": {
       "fed_rate": "0 (중립 3.6%)",
       "spread": "+1.5 (정상 0.71%)",
-      "vix": "0 (중립 24.23)",
+      "vix": "0 (중립 24.15)",
       "m2_yoy": "0 (중립 4.3%)",
       "cpi_yoy": "+1.5 (저물가 2.41%)",
       "hy_spread": "+1.5 (안정 3.46%)",
@@ -63,16 +63,16 @@
   "n_tickers": 10,
   "alloc_pool": 0,
   "ticker_alloc": {
-    "TGT": 80000,
-    "WMT": 80000,
-    "CB": 80000,
-    "CL": 80000,
-    "KO": 80000,
-    "PEP": 80000,
-    "ADM": 80000,
-    "TXN": 80000,
-    "BEN": 80000,
-    "AFL": 80000
+    "TGT": 94930,
+    "WMT": 94930,
+    "CB": 94930,
+    "CL": 94930,
+    "KO": 94930,
+    "PEP": 94930,
+    "ADM": 94930,
+    "TXN": 94930,
+    "BEN": 94930,
+    "AFL": 94930
   },
   "rs_ranking": [
     {
@@ -130,8 +130,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 80000,
-      "ticker_alloc": 80000,
+      "surplus": 94930,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "WMT": {
@@ -147,8 +147,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 46414,
-      "ticker_alloc": 80000,
+      "surplus": 61344,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "CB": {
@@ -164,8 +164,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 80000,
-      "ticker_alloc": 80000,
+      "surplus": 94930,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "CL": {
@@ -181,8 +181,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 46410,
-      "ticker_alloc": 80000,
+      "surplus": 61340,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "KO": {
@@ -198,8 +198,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 80000,
-      "ticker_alloc": 80000,
+      "surplus": 94930,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "PEP": {
@@ -215,8 +215,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 80000,
-      "ticker_alloc": 80000,
+      "surplus": 94930,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "ADM": {
@@ -232,8 +232,8 @@
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 80000,
-      "ticker_alloc": 80000,
+      "surplus": 94930,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "TXN": {
@@ -245,12 +245,12 @@
       "sector": "기술",
       "rs": 16.29,
       "allocation": {
-        "pct": 0,
-        "amount": 0,
-        "signal": "NONE"
+        "pct": 30,
+        "amount": 3714,
+        "signal": "WEAK"
       },
-      "surplus": 0,
-      "ticker_alloc": 80000,
+      "surplus": 12383,
+      "ticker_alloc": 94930,
       "held_drop": false
     },
     "BEN": {
@@ -262,12 +262,12 @@
       "sector": "금융",
       "rs": null,
       "allocation": {
-        "pct": 0,
-        "amount": 0,
-        "signal": "NONE"
+        "pct": 40,
+        "amount": 35942,
+        "signal": "MEDIUM"
       },
-      "surplus": 0,
-      "ticker_alloc": 80000,
+      "surplus": 89857,
+      "ticker_alloc": 94930,
       "held_drop": true
     },
     "AFL": {
@@ -280,11 +280,11 @@
       "rs": null,
       "allocation": {
         "pct": 30,
-        "amount": 6276,
+        "amount": 10755,
         "signal": "WEAK"
       },
-      "surplus": 20920,
-      "ticker_alloc": 80000,
+      "surplus": 35850,
+      "ticker_alloc": 94930,
       "held_drop": true
     },
     "JOBY": {
@@ -320,8 +320,45 @@
       }
     }
   },
-  "signals": [],
+  "signals": [
+    {
+      "ticker": "TXN",
+      "sector": "기술",
+      "price": 194.14,
+      "prev": 198.0,
+      "change": -3.86,
+      "pct": -1.95,
+      "wr": -63.0,
+      "rs": 16.29,
+      "allocation": {
+        "pct": 30,
+        "amount": 3714,
+        "signal": "WEAK"
+      },
+      "surplus": 12383,
+      "ticker_alloc": 94930,
+      "held_drop": false
+    }
+  ],
   "held_signals": [
+    {
+      "ticker": "BEN",
+      "sector": "금융",
+      "price": 23.62,
+      "prev": 23.19,
+      "change": 0.43,
+      "pct": 1.85,
+      "wr": -75.9,
+      "rs": null,
+      "allocation": {
+        "pct": 40,
+        "amount": 35942,
+        "signal": "MEDIUM"
+      },
+      "surplus": 89857,
+      "ticker_alloc": 94930,
+      "held_drop": true
+    },
     {
       "ticker": "AFL",
       "sector": "금융",
@@ -333,11 +370,11 @@
       "rs": null,
       "allocation": {
         "pct": 30,
-        "amount": 6276,
+        "amount": 10755,
         "signal": "WEAK"
       },
-      "surplus": 20920,
-      "ticker_alloc": 80000,
+      "surplus": 35850,
+      "ticker_alloc": 94930,
       "held_drop": true
     }
   ],
@@ -349,32 +386,32 @@
       "avg_price_usd": 190.822214532872,
       "current_price": 194.14,
       "current_value_usd": 56.11,
-      "current_value_krw": 84419,
+      "current_value_krw": 84473,
       "pnl_pct": 1.74,
       "day_change_pct": -1.95,
       "wr": -63.0,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 0,
-      "ticker_alloc": 80000
+      "surplus": 12383,
+      "ticker_alloc": 94930
     },
     {
       "ticker": "BEN",
       "sector": "금융",
-      "shares": 4.2277000000000005,
+      "shares": 0.02770000000000028,
       "avg_price_usd": 24.386994110272724,
       "current_price": 23.62,
-      "current_value_usd": 99.86,
-      "current_value_krw": 150249,
+      "current_value_usd": 0.65,
+      "current_value_krw": 985,
       "pnl_pct": -3.15,
       "day_change_pct": 1.85,
       "wr": -75.9,
       "dividends_usd": 0,
       "held_drop": true,
       "fixed_watch": false,
-      "surplus": 0,
-      "ticker_alloc": 80000
+      "surplus": 89857,
+      "ticker_alloc": 94930
     },
     {
       "ticker": "AFL",
@@ -383,15 +420,15 @@
       "avg_price_usd": 108.48025414364642,
       "current_price": 109.71,
       "current_value_usd": 39.72,
-      "current_value_krw": 59756,
+      "current_value_krw": 59794,
       "pnl_pct": 1.13,
       "day_change_pct": -0.19,
       "wr": -69.4,
       "dividends_usd": 0,
       "held_drop": true,
       "fixed_watch": false,
-      "surplus": 20920,
-      "ticker_alloc": 80000
+      "surplus": 35850,
+      "ticker_alloc": 94930
     },
     {
       "ticker": "JOBY",
@@ -400,7 +437,7 @@
       "avg_price_usd": 9.71,
       "current_price": 8.26,
       "current_value_usd": 173.46,
-      "current_value_krw": 260991,
+      "current_value_krw": 261158,
       "pnl_pct": -14.93,
       "day_change_pct": -0.96,
       "wr": -94.2,
@@ -417,15 +454,15 @@
       "avg_price_usd": 119.38,
       "current_price": 124.28,
       "current_value_usd": 23.08,
-      "current_value_krw": 34725,
+      "current_value_krw": 34747,
       "pnl_pct": 4.1,
       "day_change_pct": -0.01,
       "wr": -40.8,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 46414,
-      "ticker_alloc": 80000
+      "surplus": 61344,
+      "ticker_alloc": 94930
     },
     {
       "ticker": "CL",
@@ -434,21 +471,21 @@
       "avg_price_usd": 84.59,
       "current_price": 85.23,
       "current_value_usd": 22.34,
-      "current_value_krw": 33611,
+      "current_value_krw": 33633,
       "pnl_pct": 0.76,
       "day_change_pct": 0.15,
       "wr": -59.2,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 46410,
-      "ticker_alloc": 80000
+      "surplus": 61340,
+      "ticker_alloc": 94930
     }
   ],
   "portfolio_summary": {
-    "total_value_usd": 414.57,
-    "total_value_krw": 623770,
-    "total_pnl_pct": -7.0,
+    "total_value_usd": 315.36,
+    "total_value_krw": 474800,
+    "total_pnl_pct": -8.15,
     "total_invested_krw": 21600000
   },
   "benchmarks": {
@@ -543,7 +580,7 @@
         33.31,
         33.51,
         30.94,
-        35.79,
+        35.8,
         36.24,
         35.46,
         35.61,
