@@ -15,7 +15,7 @@
     },
     {
       "ticker": "BEN",
-      "shares": 4.2277000000000005,
+      "shares": 0.02770000000000028,
       "avg_price_usd": 24.386994110272724,
       "sector": "금융",
       "start_date": "2026-03-16"
@@ -137,12 +137,26 @@
       "ticker": "SWK",
       "div_krw": 166,
       "note": "배당금"
+    },
+    {
+      "date": "2026-04-01",
+      "type": "sell",
+      "ticker": "BEN",
+      "shares": 4.2,
+      "price_usd": 23.62,
+      "fx": 1505,
+      "note": "리벨런싱"
     }
   ],
   "extra_deposits": [
     {
       "date": "2026-03-15",
       "amount_krw": 800000
+    },
+    {
+      "date": "2026-04-01",
+      "amount_krw": 149302,
+      "note": "BEN 매도대금"
     }
   ],
   "signal_stages": {
