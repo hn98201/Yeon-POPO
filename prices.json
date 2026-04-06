@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-07 07:40 KST",
+  "updated_at": "2026-04-07 08:06 KST",
   "fx_rate": 1508.8,
   "egg": {
     "stage": 4,
@@ -119,9 +119,9 @@
   "stock_data": {
     "TGT": {
       "price": 122.21,
-      "prev": 120.4,
-      "change": 1.81,
-      "pct": 1.5,
+      "prev": 120.25,
+      "change": 1.96,
+      "pct": 1.63,
       "wr": -14.0,
       "sector": "필수소비재",
       "rs": 37.55,
