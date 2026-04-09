@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-04-10 07:43 KST",
+  "updated_at": "2026-04-10 08:11 KST",
   "fx_rate": 1474.17,
   "egg": {
     "stage": 4,
     "score": 4.5,
     "desc": "④ 상승 본격",
     "indicators": {
-      "vix": 19.49,
+      "vix": 21.04,
       "fed_rate": 3.59,
       "spread": 0.7,
       "cpi_yoy": 2.41,
@@ -19,7 +19,7 @@
     "scoring_details": {
       "fed_rate": "0 (중립 3.59%)",
       "spread": "+1.5 (정상 0.7%)",
-      "vix": "0 (중립 19.49)",
+      "vix": "0 (중립 21.04)",
       "m2_yoy": "0 (중립 4.3%)",
       "cpi_yoy": "+1.5 (저물가 2.41%)",
       "hy_spread": "+1.5 (안정 3.46%)",
@@ -29,9 +29,9 @@
     }
   },
   "budget": {
-    "amount": 800000,
-    "multiplier": 1.0,
-    "reason": "중립(VIX 19)",
+    "amount": 680000,
+    "multiplier": 0.85,
+    "reason": "불안(VIX 21) -15%",
     "base": 800000
   },
   "top_tickers": [
