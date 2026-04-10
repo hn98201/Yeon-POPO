@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-04-10 08:11 KST",
-  "fx_rate": 1474.17,
+  "updated_at": "2026-04-10 11:32 KST",
+  "fx_rate": 1480.18,
   "egg": {
     "stage": 4,
     "score": 4.5,
     "desc": "④ 상승 본격",
     "indicators": {
-      "vix": 21.04,
+      "vix": 19.49,
       "fed_rate": 3.59,
       "spread": 0.7,
       "cpi_yoy": 2.41,
@@ -19,7 +19,7 @@
     "scoring_details": {
       "fed_rate": "0 (중립 3.59%)",
       "spread": "+1.5 (정상 0.7%)",
-      "vix": "0 (중립 21.04)",
+      "vix": "0 (중립 19.49)",
       "m2_yoy": "0 (중립 4.3%)",
       "cpi_yoy": "+1.5 (저물가 2.41%)",
       "hy_spread": "+1.5 (안정 3.46%)",
@@ -29,9 +29,9 @@
     }
   },
   "budget": {
-    "amount": 680000,
-    "multiplier": 0.85,
-    "reason": "불안(VIX 21) -15%",
+    "amount": 800000,
+    "multiplier": 1.0,
+    "reason": "중립(VIX 19)",
     "base": 800000
   },
   "top_tickers": [
@@ -329,7 +329,7 @@
       "avg_price_usd": 190.822214532872,
       "current_price": 214.98,
       "current_value_usd": 62.13,
-      "current_value_krw": 91589,
+      "current_value_krw": 91962,
       "pnl_pct": 12.66,
       "day_change_pct": 3.02,
       "wr": -29.4,
@@ -346,7 +346,7 @@
       "avg_price_usd": 24.386994110272724,
       "current_price": 25.04,
       "current_value_usd": 0.69,
-      "current_value_krw": 1022,
+      "current_value_krw": 1027,
       "pnl_pct": 2.68,
       "day_change_pct": 0.16,
       "wr": -50.8,
@@ -363,7 +363,7 @@
       "avg_price_usd": 108.48025414364642,
       "current_price": 113.07,
       "current_value_usd": 40.93,
-      "current_value_krw": 60340,
+      "current_value_krw": 60586,
       "pnl_pct": 4.23,
       "day_change_pct": -0.17,
       "wr": -43.5,
@@ -380,7 +380,7 @@
       "avg_price_usd": 9.71,
       "current_price": 8.28,
       "current_value_usd": 173.88,
-      "current_value_krw": 256329,
+      "current_value_krw": 257374,
       "pnl_pct": -14.73,
       "day_change_pct": -4.28,
       "wr": -94.0,
@@ -397,7 +397,7 @@
       "avg_price_usd": 119.38,
       "current_price": 129.13,
       "current_value_usd": 23.98,
-      "current_value_krw": 35350,
+      "current_value_krw": 35494,
       "pnl_pct": 8.17,
       "day_change_pct": 1.83,
       "wr": -21.3,
@@ -414,7 +414,7 @@
       "avg_price_usd": 84.59,
       "current_price": 86.04,
       "current_value_usd": 22.55,
-      "current_value_krw": 33244,
+      "current_value_krw": 33380,
       "pnl_pct": 1.71,
       "day_change_pct": 0.35,
       "wr": -55.8,
@@ -427,7 +427,7 @@
   ],
   "portfolio_summary": {
     "total_value_usd": 324.16,
-    "total_value_krw": 477867,
+    "total_value_krw": 479815,
     "total_pnl_pct": -5.59,
     "total_invested_krw": 21600000
   },
