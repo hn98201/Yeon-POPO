@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-04-21 11:35 KST",
-  "fx_rate": 1472.06,
+  "updated_at": "2026-04-22 00:19 KST",
+  "fx_rate": 1474.79,
   "egg": {
     "stage": 4,
     "score": 3.0,
     "desc": "④ 상승 본격",
     "indicators": {
-      "vix": 18.87,
+      "vix": 19.62,
       "fed_rate": 3.6,
-      "spread": 0.65,
+      "spread": 0.7,
       "cpi_yoy": 3.26,
       "unemp": 4.3,
       "m2_yoy": 4.3,
@@ -18,8 +18,8 @@
     },
     "scoring_details": {
       "fed_rate": "0 (중립 3.6%)",
-      "spread": "+1.5 (정상 0.65%)",
-      "vix": "0 (중립 18.87)",
+      "spread": "+1.5 (정상 0.7%)",
+      "vix": "0 (중립 19.62)",
       "m2_yoy": "0 (중립 4.3%)",
       "cpi_yoy": "0 (중립 3.26%)",
       "hy_spread": "+1.5 (안정 3.46%)",
@@ -31,7 +31,7 @@
   "budget": {
     "amount": 800000,
     "multiplier": 1.0,
-    "reason": "중립(VIX 19)",
+    "reason": "중립(VIX 20)",
     "base": 800000
   },
   "top_tickers": [
@@ -39,13 +39,12 @@
     "CB",
     "WMT",
     "KO",
-    "BEN",
     "TXN",
+    "BEN",
     "CINF",
-    "PEP"
+    "AFL"
   ],
   "held_dropped": [
-    "AFL",
     "CL"
   ],
   "all_active": [
@@ -53,246 +52,227 @@
     "CB",
     "WMT",
     "KO",
-    "BEN",
     "TXN",
+    "BEN",
     "CINF",
-    "PEP",
     "AFL",
     "CL"
   ],
-  "n_tickers": 10,
+  "n_tickers": 9,
   "alloc_pool": 0,
   "ticker_alloc": {
-    "TGT": 94930,
-    "CB": 94930,
-    "WMT": 94930,
-    "KO": 94930,
-    "BEN": 94930,
-    "TXN": 94930,
-    "CINF": 94930,
-    "PEP": 94930,
-    "AFL": 94930,
-    "CL": 94930
+    "TGT": 105477,
+    "CB": 105477,
+    "WMT": 105477,
+    "KO": 105477,
+    "TXN": 105477,
+    "BEN": 105477,
+    "CINF": 105477,
+    "AFL": 105477,
+    "CL": 105477
   },
   "rs_ranking": [
     {
       "ticker": "TGT",
       "sector": "필수소비재",
-      "rs": 30.0
+      "rs": 27.54
     },
     {
       "ticker": "CB",
       "sector": "금융",
-      "rs": 21.01
+      "rs": 20.63
     },
     {
       "ticker": "WMT",
       "sector": "필수소비재",
-      "rs": 13.96
+      "rs": 10.93
     },
     {
       "ticker": "KO",
       "sector": "필수소비재",
-      "rs": 13.34
-    },
-    {
-      "ticker": "BEN",
-      "sector": "금융",
-      "rs": 9.49
+      "rs": 10.74
     },
     {
       "ticker": "TXN",
       "sector": "기술",
-      "rs": 8.96
+      "rs": 7.65
+    },
+    {
+      "ticker": "BEN",
+      "sector": "금융",
+      "rs": 6.74
     },
     {
       "ticker": "CINF",
       "sector": "금융",
-      "rs": 4.82
+      "rs": 4.08
     },
     {
-      "ticker": "PEP",
-      "sector": "필수소비재",
-      "rs": 1.93
+      "ticker": "AFL",
+      "sector": "금융",
+      "rs": -0.34
     }
   ],
   "stock_data": {
     "TGT": {
-      "price": 130.18,
-      "prev": 127.75,
-      "change": 2.43,
-      "pct": 1.9,
-      "wr": -0.0,
+      "price": 132.04,
+      "prev": 130.19,
+      "change": 1.85,
+      "pct": 1.42,
+      "wr": -3.1,
       "sector": "필수소비재",
-      "rs": 30.0,
+      "rs": 27.54,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 94930,
-      "ticker_alloc": 94930,
+      "surplus": 105477,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "CB": {
-      "price": 329.99,
-      "prev": 330.8,
-      "change": -0.81,
-      "pct": -0.24,
-      "wr": -29.6,
+      "price": 328.13,
+      "prev": 330.6,
+      "change": -2.47,
+      "pct": -0.75,
+      "wr": -33.4,
       "sector": "금융",
-      "rs": 21.01,
+      "rs": 20.63,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 94930,
-      "ticker_alloc": 94930,
+      "surplus": 105477,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "WMT": {
-      "price": 127.92,
-      "prev": 127.5,
-      "change": 0.42,
-      "pct": 0.33,
-      "wr": -33.9,
+      "price": 128.88,
+      "prev": 127.9,
+      "change": 0.98,
+      "pct": 0.76,
+      "wr": -28.9,
       "sector": "필수소비재",
-      "rs": 13.96,
+      "rs": 10.93,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 61344,
-      "ticker_alloc": 94930,
+      "surplus": 71891,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "KO": {
-      "price": 75.48,
-      "prev": 75.73,
-      "change": -0.25,
-      "pct": -0.33,
-      "wr": -49.1,
+      "price": 74.71,
+      "prev": 75.52,
+      "change": -0.81,
+      "pct": -1.07,
+      "wr": -55.5,
       "sector": "필수소비재",
-      "rs": 13.34,
+      "rs": 10.74,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 94930,
-      "ticker_alloc": 94930,
-      "held_drop": false
-    },
-    "BEN": {
-      "price": 27.73,
-      "prev": 27.5,
-      "change": 0.23,
-      "pct": 0.84,
-      "wr": -3.2,
-      "sector": "금융",
-      "rs": 9.49,
-      "allocation": {
-        "pct": 0,
-        "amount": 0,
-        "signal": "NONE"
-      },
-      "surplus": 89857,
-      "ticker_alloc": 94930,
+      "surplus": 105477,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "TXN": {
-      "price": 233.7,
-      "prev": 230.2,
-      "change": 3.5,
-      "pct": 1.52,
-      "wr": -0.6,
+      "price": 232.85,
+      "prev": 234.87,
+      "change": -2.02,
+      "pct": -0.86,
+      "wr": -6.0,
       "sector": "기술",
-      "rs": 8.96,
+      "rs": 7.65,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 12383,
-      "ticker_alloc": 94930,
+      "surplus": 22930,
+      "ticker_alloc": 105477,
+      "held_drop": false
+    },
+    "BEN": {
+      "price": 27.66,
+      "prev": 27.7,
+      "change": -0.04,
+      "pct": -0.16,
+      "wr": -10.3,
+      "sector": "금융",
+      "rs": 6.74,
+      "allocation": {
+        "pct": 0,
+        "amount": 0,
+        "signal": "NONE"
+      },
+      "surplus": 100404,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "CINF": {
-      "price": 165.99,
-      "prev": 167.0,
-      "change": -1.01,
-      "pct": -0.6,
-      "wr": -35.0,
+      "price": 165.09,
+      "prev": 167.33,
+      "change": -2.24,
+      "pct": -1.34,
+      "wr": -39.3,
       "sector": "금융",
-      "rs": 4.82,
+      "rs": 4.08,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 94930,
-      "ticker_alloc": 94930,
-      "held_drop": false
-    },
-    "PEP": {
-      "price": 156.99,
-      "prev": 157.5,
-      "change": -0.51,
-      "pct": -0.32,
-      "wr": -46.1,
-      "sector": "필수소비재",
-      "rs": 1.93,
-      "allocation": {
-        "pct": 0,
-        "amount": 0,
-        "signal": "NONE"
-      },
-      "surplus": 94930,
-      "ticker_alloc": 94930,
+      "surplus": 105477,
+      "ticker_alloc": 105477,
       "held_drop": false
     },
     "AFL": {
-      "price": 114.67,
-      "prev": 114.52,
-      "change": 0.15,
-      "pct": 0.13,
-      "wr": -31.1,
+      "price": 115.07,
+      "prev": 115.0,
+      "change": 0.07,
+      "pct": 0.06,
+      "wr": -28.2,
       "sector": "금융",
-      "rs": null,
+      "rs": -0.34,
       "allocation": {
         "pct": 0,
         "amount": 0,
         "signal": "NONE"
       },
-      "surplus": 35850,
-      "ticker_alloc": 94930,
-      "held_drop": true
+      "surplus": 46397,
+      "ticker_alloc": 105477,
+      "held_drop": false
     },
     "CL": {
-      "price": 83.53,
-      "prev": 85.97,
-      "change": -2.44,
-      "pct": -2.83,
-      "wr": -94.4,
+      "price": 82.29,
+      "prev": 83.84,
+      "change": -1.55,
+      "pct": -1.85,
+      "wr": -98.8,
       "sector": "필수소비재",
       "rs": null,
       "allocation": {
         "pct": 30,
-        "amount": 18402,
+        "amount": 21566,
         "signal": "STRONG"
       },
-      "surplus": 61340,
-      "ticker_alloc": 94930,
+      "surplus": 71887,
+      "ticker_alloc": 105477,
       "held_drop": true
     },
     "JOBY": {
-      "price": 9.14,
-      "prev": 9.33,
-      "change": -0.19,
-      "pct": -2.08,
-      "wr": -82.6,
+      "price": 9.15,
+      "prev": 9.18,
+      "change": -0.03,
+      "pct": -0.27,
+      "wr": -82.4,
       "sector": "UAM",
       "rs": null,
       "fixed": true,
@@ -305,11 +285,11 @@
   },
   "watch_data": {
     "JOBY": {
-      "price": 9.14,
-      "prev": 9.33,
-      "change": -0.19,
-      "pct": -2.08,
-      "wr": -82.6,
+      "price": 9.15,
+      "prev": 9.18,
+      "change": -0.03,
+      "pct": -0.27,
+      "wr": -82.4,
       "sector": "UAM",
       "rs": null,
       "fixed": true,
@@ -325,19 +305,19 @@
     {
       "ticker": "CL",
       "sector": "필수소비재",
-      "price": 83.53,
-      "prev": 85.97,
-      "change": -2.44,
-      "pct": -2.83,
-      "wr": -94.4,
+      "price": 82.29,
+      "prev": 83.84,
+      "change": -1.55,
+      "pct": -1.85,
+      "wr": -98.8,
       "rs": null,
       "allocation": {
         "pct": 30,
-        "amount": 18402,
+        "amount": 21566,
         "signal": "STRONG"
       },
-      "surplus": 61340,
-      "ticker_alloc": 94930,
+      "surplus": 71887,
+      "ticker_alloc": 105477,
       "held_drop": true
     }
   ],
@@ -347,63 +327,63 @@
       "sector": "기술",
       "shares": 0.289,
       "avg_price_usd": 190.822214532872,
-      "current_price": 233.7,
-      "current_value_usd": 67.54,
-      "current_value_krw": 99422,
-      "pnl_pct": 22.47,
-      "day_change_pct": 1.52,
-      "wr": -0.6,
+      "current_price": 232.85,
+      "current_value_usd": 67.29,
+      "current_value_krw": 99244,
+      "pnl_pct": 22.02,
+      "day_change_pct": -0.86,
+      "wr": -6.0,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 12383,
-      "ticker_alloc": 94930
+      "surplus": 22930,
+      "ticker_alloc": 105477
     },
     {
       "ticker": "BEN",
       "sector": "금융",
       "shares": 0.02770000000000028,
       "avg_price_usd": 24.386994110272724,
-      "current_price": 27.73,
+      "current_price": 27.66,
       "current_value_usd": 0.77,
-      "current_value_krw": 1131,
-      "pnl_pct": 13.71,
-      "day_change_pct": 0.84,
-      "wr": -3.2,
+      "current_value_krw": 1130,
+      "pnl_pct": 13.42,
+      "day_change_pct": -0.16,
+      "wr": -10.3,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 89857,
-      "ticker_alloc": 94930
+      "surplus": 100404,
+      "ticker_alloc": 105477
     },
     {
       "ticker": "AFL",
       "sector": "금융",
       "shares": 0.362,
       "avg_price_usd": 108.48025414364642,
-      "current_price": 114.67,
-      "current_value_usd": 41.51,
-      "current_value_krw": 61106,
-      "pnl_pct": 5.71,
-      "day_change_pct": 0.13,
-      "wr": -31.1,
+      "current_price": 115.07,
+      "current_value_usd": 41.66,
+      "current_value_krw": 61433,
+      "pnl_pct": 6.07,
+      "day_change_pct": 0.06,
+      "wr": -28.2,
       "dividends_usd": 0,
-      "held_drop": true,
+      "held_drop": false,
       "fixed_watch": false,
-      "surplus": 35850,
-      "ticker_alloc": 94930
+      "surplus": 46397,
+      "ticker_alloc": 105477
     },
     {
       "ticker": "JOBY",
       "sector": "--",
       "shares": 21,
       "avg_price_usd": 9.71,
-      "current_price": 9.14,
-      "current_value_usd": 191.94,
-      "current_value_krw": 282547,
-      "pnl_pct": -5.87,
-      "day_change_pct": -2.08,
-      "wr": -82.6,
+      "current_price": 9.15,
+      "current_value_usd": 192.15,
+      "current_value_krw": 283381,
+      "pnl_pct": -5.77,
+      "day_change_pct": -0.27,
+      "wr": -82.4,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": true,
@@ -415,40 +395,40 @@
       "sector": "필수소비재",
       "shares": 0.1857,
       "avg_price_usd": 119.38,
-      "current_price": 127.92,
-      "current_value_usd": 23.75,
-      "current_value_krw": 34968,
-      "pnl_pct": 7.15,
-      "day_change_pct": 0.33,
-      "wr": -33.9,
+      "current_price": 128.88,
+      "current_value_usd": 23.93,
+      "current_value_krw": 35296,
+      "pnl_pct": 7.96,
+      "day_change_pct": 0.76,
+      "wr": -28.9,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
-      "surplus": 61344,
-      "ticker_alloc": 94930
+      "surplus": 71891,
+      "ticker_alloc": 105477
     },
     {
       "ticker": "CL",
       "sector": "필수소비재",
       "shares": 0.2621,
       "avg_price_usd": 84.59,
-      "current_price": 83.53,
-      "current_value_usd": 21.89,
-      "current_value_krw": 32228,
-      "pnl_pct": -1.25,
-      "day_change_pct": -2.83,
-      "wr": -94.4,
+      "current_price": 82.29,
+      "current_value_usd": 21.57,
+      "current_value_krw": 31809,
+      "pnl_pct": -2.72,
+      "day_change_pct": -1.85,
+      "wr": -98.8,
       "dividends_usd": 0,
       "held_drop": true,
       "fixed_watch": false,
-      "surplus": 61340,
-      "ticker_alloc": 94930
+      "surplus": 71887,
+      "ticker_alloc": 105477
     }
   ],
   "portfolio_summary": {
-    "total_value_usd": 347.4,
-    "total_value_krw": 511394,
-    "total_pnl_pct": 1.18,
+    "total_value_usd": 347.37,
+    "total_value_krw": 512298,
+    "total_pnl_pct": 1.17,
     "total_invested_krw": 21600000
   },
   "benchmarks": {
@@ -561,7 +541,7 @@
         20.57,
         24.89,
         30.53,
-        30.28
+        30.12
       ]
     },
     "QQQ": {
@@ -673,7 +653,7 @@
         24.39,
         29.94,
         37.97,
-        37.53
+        37.75
       ]
     },
     "NOBL": {
@@ -785,7 +765,7 @@
         11.53,
         12.82,
         14.56,
-        14.79
+        14.33
       ]
     }
   },
