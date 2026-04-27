@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-28 07:56 KST",
+  "updated_at": "2026-04-28 08:29 KST",
   "fx_rate": 1473.89,
   "egg": {
     "stage": 4,
@@ -116,9 +116,9 @@
   "stock_data": {
     "TGT": {
       "price": 129.72,
-      "prev": 129.32,
-      "change": 0.4,
-      "pct": 0.31,
+      "prev": 129.11,
+      "change": 0.61,
+      "pct": 0.47,
       "wr": -10.2,
       "sector": "필수소비재",
       "rs": 26.98,
@@ -269,9 +269,9 @@
     },
     "JOBY": {
       "price": 9.04,
-      "prev": 8.56,
-      "change": 0.48,
-      "pct": 5.61,
+      "prev": 8.54,
+      "change": 0.5,
+      "pct": 5.85,
       "wr": -79.2,
       "sector": "UAM",
       "rs": null,
@@ -286,9 +286,9 @@
   "watch_data": {
     "JOBY": {
       "price": 9.04,
-      "prev": 8.56,
-      "change": 0.48,
-      "pct": 5.61,
+      "prev": 8.54,
+      "change": 0.5,
+      "pct": 5.85,
       "wr": -79.2,
       "sector": "UAM",
       "rs": null,
@@ -400,7 +400,7 @@
       "current_value_usd": 189.84,
       "current_value_krw": 279803,
       "pnl_pct": -6.9,
-      "day_change_pct": 5.61,
+      "day_change_pct": 5.85,
       "wr": -79.2,
       "dividends_usd": 0,
       "held_drop": false,
@@ -510,7 +510,7 @@
         0.0,
         -0.4,
         4.91,
-        2.25,
+        2.24,
         4.04,
         5.75,
         5.39,
