@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-02 08:29 KST",
+  "updated_at": "2026-05-04 11:50 KST",
   "fx_rate": 1471.22,
   "egg": {
     "stage": 4,
@@ -136,7 +136,7 @@
       "prev": 281.0,
       "change": 0.02,
       "pct": 0.01,
-      "wr": -6.6,
+      "wr": -6.7,
       "sector": "기술",
       "rs": 24.39,
       "allocation": {
@@ -332,7 +332,7 @@
       "current_value_krw": 119485,
       "pnl_pct": 47.27,
       "day_change_pct": 0.01,
-      "wr": -6.6,
+      "wr": -6.7,
       "dividends_usd": 0,
       "held_drop": false,
       "fixed_watch": false,
